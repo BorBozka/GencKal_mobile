@@ -25,9 +25,9 @@ export default function TargetSimulator({
     const minWeight = Math.ceil(leanMass);
 
     return (
-        <View className="w-full bg-indigo-700 rounded-2xl shadow-2xl p-6">
+        <View className="w-full py-4 mb-6">
             {/* Başlık */}
-            <Text className="text-xl font-bold text-white text-center mb-4">
+            <Text className="text-lg font-bold text-slate-100 text-center mb-6">
                 Hedef Simülatörü
             </Text>
 
@@ -52,7 +52,7 @@ export default function TargetSimulator({
                     value={targetWeight}
                     onValueChange={(v) => setTargetWeight(Math.round(v))}
                     minimumTrackTintColor="#22d3ee"
-                    maximumTrackTintColor="rgba(49,46,129,0.6)"
+                    maximumTrackTintColor="rgba(255,255,255,0.2)"
                     thumbTintColor="#22d3ee"
                 />
 
@@ -67,11 +67,11 @@ export default function TargetSimulator({
             </View>
 
             {/* Sonuç Paneli */}
-            <View className="bg-indigo-900/40 rounded-2xl p-6 border border-indigo-500/30 items-center mt-2">
-                <Text className="text-sm text-indigo-200 font-medium mb-2">
+            <View className="w-full items-center justify-center mt-6 pt-6 border-t border-white/10">
+                <Text className="text-sm text-indigo-200 font-medium mb-2 text-center">
                     Yeni Yağ Oranı
                 </Text>
-                <Text className="text-5xl font-black text-white">
+                <Text className="text-5xl font-black text-white text-center">
                     % {newBodyFat > 0 ? newBodyFat.toFixed(1) : "0.0"}
                 </Text>
             </View>

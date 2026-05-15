@@ -33,9 +33,9 @@ export default function ResultsPanel({
     const fatMass = (kilo * bodyFat) / 100;
 
     return (
-        <View className="w-full bg-indigo-700 rounded-2xl shadow-2xl p-6 pt-8 pb-8">
+        <View className="w-full py-4 border-b border-white/10 mb-6">
             {/* Dairesel İlerleme Çubuğu SVG */}
-            <View className="items-center mb-5">
+            <View className="items-center mb-8">
                 <View className="w-44 h-44 relative">
                     <Svg width="100%" height="100%" viewBox="0 0 100 100">
                         <Defs>
@@ -83,7 +83,7 @@ export default function ResultsPanel({
             </View>
 
             {/* Alt Metrikler */}
-            <View className="gap-3 px-1">
+            <View className="gap-4 px-1">
                 <MetricRow label="Beden Kitle İndeksi" value={calculatedBMI > 0 ? calculatedBMI.toFixed(2) : "--"} />
                 <MetricRow label="BMI Durumu" value={calculatedBMI > 0 ? bmiLabel : "--"} />
                 <MetricRow label="Yağsız Vücut Kütlesi" value={leanMass > 0 ? `${leanMass.toFixed(2)} kg` : "-- kg"} />

@@ -21,54 +21,52 @@ const sliderConfig = [
 
 export default function InputPanel({ data, setField }: InputPanelProps) {
     return (
-        <View className="w-full bg-white rounded-2xl p-6 shadow-lg">
-            <View className="gap-7">
-                {sliderConfig.map((slider) => {
-                    const val = data[slider.name] || 0;
-                    return (
-                        <View key={slider.name}>
-                            {/* Üst Satır: Label + Değer */}
-                            <View className="flex-row justify-between items-end mb-2">
-                                <Text className="text-base font-bold text-slate-500 tracking-wide">
-                                    {slider.label}
+        <View className="w-full">
+            {sliderConfig.map((slider, idx) => {
+                const val = data[slider.name] || 0;
+                return (
+                    <View key={slider.name} className={`${idx < sliderConfig.length - 1 ? "border-b border-white/10 pb-8 mb-8" : "mb-8"}`}>
+                        {/* Üst Satır: Label + Değer */}
+                        <View className="flex-row justify-between items-end mb-2">
+                            <Text className="text-base font-bold text-indigo-100 tracking-wide mb-1">
+                                {slider.label}
+                            </Text>
+                            <View className="flex-row items-end">
+                                <Text className="text-3xl font-black text-white leading-none">
+                                    {val}
                                 </Text>
-                                <View className="flex-row items-baseline">
-                                    <Text className="text-3xl font-black text-slate-800">
-                                        {val}
-                                    </Text>
-                                    <Text className="text-sm text-slate-400 font-bold ml-1">
-                                        {slider.unit}
-                                    </Text>
-                                </View>
-                            </View>
-
-                            {/* Slider */}
-                            <View className="w-full py-1">
-                                <Slider
-                                    minimumValue={slider.min}
-                                    maximumValue={slider.max}
-                                    step={1}
-                                    value={val}
-                                    onValueChange={(v) => setField(slider.name, Math.round(v))}
-                                    minimumTrackTintColor="#6366f1"
-                                    maximumTrackTintColor="#e2e8f0"
-                                    thumbTintColor="#6366f1"
-                                />
-                            </View>
-
-                            {/* Alt Satır: Min/Max */}
-                            <View className="flex-row justify-between mt-0.5">
-                                <Text className="text-xs text-slate-500 font-medium">
-                                    {slider.min} {slider.unit}
-                                </Text>
-                                <Text className="text-xs text-slate-500 font-medium">
-                                    {slider.max} {slider.unit}
+                                <Text className="text-sm text-indigo-200 font-bold ml-1 mb-0.5">
+                                    {slider.unit}
                                 </Text>
                             </View>
                         </View>
-                    );
-                })}
-            </View>
+
+                        {/* Slider */}
+                        <View className="w-full py-1">
+                            <Slider
+                                minimumValue={slider.min}
+                                maximumValue={slider.max}
+                                step={1}
+                                value={val}
+                                onValueChange={(v) => setField(slider.name, Math.round(v))}
+                                minimumTrackTintColor="#22d3ee"
+                                maximumTrackTintColor="rgba(255,255,255,0.2)"
+                                thumbTintColor="#22d3ee"
+                            />
+                        </View>
+
+                        {/* Alt Satır: Min/Max */}
+                        <View className="flex-row justify-between mt-0.5">
+                            <Text className="text-xs text-indigo-300/60 font-medium">
+                                {slider.min} {slider.unit}
+                            </Text>
+                            <Text className="text-xs text-indigo-300/60 font-medium">
+                                {slider.max} {slider.unit}
+                            </Text>
+                        </View>
+                    </View>
+                );
+            })}
         </View>
     );
 }

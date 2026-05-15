@@ -91,10 +91,11 @@ export default function DashboardScreen({ onNavigateToDiet }: DashboardScreenPro
             <ScrollView
                 className="flex-1"
                 showsVerticalScrollIndicator={false}
-                contentContainerClassName="pb-12"
+                contentContainerClassName="pb-12 px-5 pt-4"
+                keyboardShouldPersistTaps="handled"
             >
                 {/* Üst: Başlık */}
-                <View className="items-center px-5 mb-4">
+                <View className="items-center mb-8">
                     <Text className="text-[28px] font-normal text-white tracking-wide text-center">
                         GençKal Calculator
                     </Text>
@@ -104,43 +105,40 @@ export default function DashboardScreen({ onNavigateToDiet }: DashboardScreenPro
                 </View>
 
                 {/* ResultsPanel */}
-                <View className="px-4 mb-4">
-                    <ResultsPanel
-                        calculatedBMI={calculatedBMI}
-                        leanMass={leanMass}
-                        bodyFat={yagOrani || 0}
-                        kilo={kilo}
-                        ffmi={rawFFMI}
-                        normalizedFfmi={calculatedFFMI}
-                    />
-                </View>
+                <ResultsPanel
+                    calculatedBMI={calculatedBMI}
+                    leanMass={leanMass}
+                    bodyFat={yagOrani || 0}
+                    kilo={kilo}
+                    ffmi={rawFFMI}
+                    normalizedFfmi={calculatedFFMI}
+                />
 
-                {/* InputPanel */}
-                <View className="px-4 mb-4 -mt-3">
+                {/* Girdi ve Çıktı Ayrımı (Zarif Panel) */}
+                <View className="bg-white/5 rounded-t-[3rem] pt-8 px-6 -mx-5 mt-6">
+                    {/* InputPanel */}
                     <InputPanel
                         data={formData.fizikselVeriler}
                         setField={setFizikselAlan}
                     />
-                </View>
 
-                {/* TargetSimulator */}
-                {kilo > 0 && yagOrani > 0 && (
-                    <View className="px-4 mb-4">
+                    {/* TargetSimulator */}
+                    {kilo > 0 && yagOrani > 0 && (
                         <TargetSimulator
                             currentWeight={kilo}
                             leanMass={leanMass}
                             currentBodyFat={yagOrani}
                         />
-                    </View>
-                )}
+                    )}
 
-                {/* ReferenceScale */}
-                <View className="px-4 mt-2">
-                    <ReferenceScale
-                        score={calculatedFFMI > 0 ? calculatedFFMI : calculatedBMI}
-                        type={calculatedFFMI > 0 ? "FFMI" : "BMI"}
-                        gender={formData.fizikselVeriler.cinsiyet}
-                    />
+                    {/* ReferenceScale */}
+                    <View className="mt-4 pt-6 border-t border-white/10 pb-10">
+                        <ReferenceScale
+                            score={calculatedFFMI > 0 ? calculatedFFMI : calculatedBMI}
+                            type={calculatedFFMI > 0 ? "FFMI" : "BMI"}
+                            gender={formData.fizikselVeriler.cinsiyet}
+                        />
+                    </View>
                 </View>
             </ScrollView>
 

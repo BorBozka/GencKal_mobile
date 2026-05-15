@@ -27,114 +27,104 @@ const aktiviteOptions: { key: AktiviteSeviyesi; label: string; desc: string }[] 
 export default function TDEECalculatorPanel({ data, setField }: TDEECalculatorPanelProps) {
     return (
         <View className="w-full">
-            <View>
-                {/* Cinsiyet */}
-                <View className="mb-6">
-                    <Text className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1 mb-3">
-                        Cinsiyet
-                    </Text>
-                    <View className="flex-row">
-                        {cinsiyetOptions.map((option, idx) => (
+            {/* Cinsiyet */}
+            <View className="mb-8 border-b border-slate-200/50 pb-6">
+                <Text className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-4">
+                    Cinsiyet
+                </Text>
+                <View className="flex-row">
+                    {cinsiyetOptions.map((option, idx) => (
+                        <View key={option.key} className={`flex-1 ${idx === 0 ? "mr-2" : "ml-2"}`}>
                             <TouchableOpacity
-                                key={option.key}
                                 onPress={() => setField("cinsiyet", option.key)}
-                                className={`flex-1 h-14 rounded-2xl border-2 items-center justify-center ${
+                                className={`w-full flex-row items-center justify-center py-3 rounded-xl ${
                                     data.cinsiyet === option.key
-                                        ? "bg-indigo-50 border-indigo-500"
-                                        : "bg-white border-slate-100 shadow-sm"
-                                } ${idx === 0 ? "mr-1.5" : "ml-1.5"}`}
+                                        ? "bg-indigo-600"
+                                        : "bg-slate-200/50"
+                                }`}
                                 activeOpacity={0.7}
                                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                             >
                                 <Text
-                                    className={`text-base font-bold ${
+                                    numberOfLines={1}
+                                    className={`text-sm font-bold tracking-wide text-center flex-shrink-0 ${
                                         data.cinsiyet === option.key
-                                            ? "text-indigo-700"
+                                            ? "text-white"
                                             : "text-slate-600"
                                     }`}
                                 >
                                     {option.label}
                                 </Text>
                             </TouchableOpacity>
-                        ))}
-                    </View>
+                        </View>
+                    ))}
                 </View>
+            </View>
 
-                {/* Boy / Kilo / Yaş Inputları - Dikey Düzen */}
-                <View className="mb-6">
-                    <View className="mb-4">
-                        <NumberField
-                            label="Boy"
-                            unit="cm"
-                            value={data.boy}
-                            placeholder="175"
-                            onChange={(v) => setField("boy", v)}
-                        />
-                    </View>
-                    <View className="mb-4">
-                        <NumberField
-                            label="Kilo"
-                            unit="kg"
-                            value={data.kilo}
-                            placeholder="75"
-                            onChange={(v) => setField("kilo", v)}
-                        />
-                    </View>
-                    <View>
-                        <NumberField
-                            label="Yaş"
-                            unit="yaş"
-                            value={data.yas}
-                            placeholder="25"
-                            onChange={(v) => setField("yas", v)}
-                        />
-                    </View>
-                </View>
+            {/* Boy / Kilo / Yaş Inputları */}
+            <View className="mb-4">
+                <NumberField
+                    label="Boy"
+                    unit="cm"
+                    value={data.boy}
+                    placeholder="175"
+                    onChange={(v) => setField("boy", v)}
+                />
+                <NumberField
+                    label="Kilo"
+                    unit="kg"
+                    value={data.kilo}
+                    placeholder="75"
+                    onChange={(v) => setField("kilo", v)}
+                />
+                <NumberField
+                    label="Yaş"
+                    unit="yaş"
+                    value={data.yas}
+                    placeholder="25"
+                    onChange={(v) => setField("yas", v)}
+                />
+            </View>
 
-                {/* Aktivite Seviyesi */}
-                <View>
-                    <Text className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1 mb-3">
-                        Aktivite Seviyesi
-                    </Text>
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerClassName="pr-4"
-                        keyboardShouldPersistTaps="always"
-                    >
-                        {aktiviteOptions.map((option, idx) => (
+            {/* Aktivite Seviyesi */}
+            <View className="mt-4">
+                <Text className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-4">
+                    Aktivite Seviyesi
+                </Text>
+                <View className="flex-row flex-wrap justify-between">
+                    {aktiviteOptions.map((option) => (
+                        <View key={option.key} className="w-[48%] mb-3">
                             <TouchableOpacity
-                                key={option.key}
                                 onPress={() => setField("aktiviteSeviyesi", option.key)}
-                                className={`px-5 py-3.5 rounded-2xl border-2 items-center justify-center min-w-[100px] ${
+                                className={`w-full px-3 py-4 rounded-xl items-center justify-center ${
                                     data.aktiviteSeviyesi === option.key
-                                        ? "bg-indigo-50 border-indigo-500"
-                                        : "bg-white border-slate-100 shadow-sm"
-                                } ${idx > 0 ? "ml-3" : ""}`}
+                                        ? "bg-indigo-600"
+                                        : "bg-slate-200/50"
+                                }`}
                                 activeOpacity={0.7}
                                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                             >
                                 <Text
-                                    className={`text-sm font-bold mb-1 ${
+                                    className={`text-xs font-bold mb-1 text-center ${
                                         data.aktiviteSeviyesi === option.key
-                                            ? "text-indigo-700"
+                                            ? "text-white"
                                             : "text-slate-700"
                                     }`}
                                 >
                                     {option.label}
                                 </Text>
                                 <Text
-                                    className={`text-[11px] font-medium ${
+                                    className={`text-[10px] font-medium text-center ${
                                         data.aktiviteSeviyesi === option.key
-                                            ? "text-indigo-500"
-                                            : "text-slate-400"
+                                            ? "text-indigo-200"
+                                            : "text-slate-500"
                                     }`}
                                 >
                                     {option.desc}
                                 </Text>
                             </TouchableOpacity>
-                        ))}
-                    </ScrollView>
+                        </View>
+                    ))}
                 </View>
             </View>
         </View>
@@ -155,11 +145,11 @@ function NumberField({
     onChange: (v: number) => void;
 }) {
     return (
-        <View>
-            <Text className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1 mb-2">
+        <View className="flex-row justify-between items-baseline border-b border-slate-100 pb-2 mb-4">
+            <Text className="text-xs font-bold text-slate-500 uppercase tracking-widest">
                 {label}
             </Text>
-            <View className="h-14 bg-white shadow-sm border-2 border-slate-100 rounded-2xl flex-row items-center px-4">
+            <View className="flex-row items-baseline">
                 <TextInput
                     keyboardType="numeric"
                     value={value > 0 ? String(value) : ""}
@@ -169,9 +159,9 @@ function NumberField({
                     }}
                     placeholder={placeholder}
                     placeholderTextColor="#cbd5e1"
-                    className="flex-1 font-bold text-xl text-slate-900"
+                    className="font-bold text-2xl text-slate-900 text-right min-w-[60px] px-0 pb-0"
                 />
-                <Text className="text-base text-slate-400 font-bold ml-2">{unit}</Text>
+                <Text className="text-sm text-slate-400 font-bold ml-1">{unit}</Text>
             </View>
         </View>
     );
