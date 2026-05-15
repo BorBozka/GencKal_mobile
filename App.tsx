@@ -1,20 +1,43 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import "./global.css";
+import React, { useState, useCallback } from "react";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import type { KullaniciProfil } from "./src/types";
+import DashboardScreen from "./src/screens/DashboardScreen";
+import DietScreen from "./src/screens/DietScreen";
+
+type Screen = "dashboard" | "diet";
 
 export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
-}
+    const [currentScreen, setCurrentScreen] = useState<Screen>("dashboard");
+    const [formData, setFormData] = useState<KullaniciProfil | null>(null);
+    const [tdee, setTdee] = useState(0);
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+    const handleNavigateToDiet = useCallback((data: KullaniciProfil, calculatedTdee: number) => {
+        setFormData(data);
+        setTdee(calculatedTdee);
+        setCurrentScreen("diet");
+    }, []);
+
+    const handleBack = useCallback(() => {
+        setCurrentScreen("dashboard");
+    }, []);
+
+    const handleUpdateFormData = useCallback((data: KullaniciProfil) => {
+        setFormData(data);
+    }, []);
+
+    return (
+        <SafeAreaProvider>
+            {currentScreen === "dashboard" ? (
+                <DashboardScreen onNavigateToDiet={handleNavigateToDiet} />
+            ) : formData ? (
+                <DietScreen
+                    formData={formData}
+                    tdee={tdee}
+                    onBack={handleBack}
+                    onUpdateFormData={handleUpdateFormData}
+                />
+            ) : null}
+        </SafeAreaProvider>
+    );
+}
