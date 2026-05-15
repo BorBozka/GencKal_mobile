@@ -1,6 +1,8 @@
 // src/components/TDEECalculatorPanel.tsx
 import React from "react";
-import { View, Text, TextInput, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, TextInput, TouchableOpacity } from "react-native";
+import Modal from "react-native-modal";
+import { Feather } from "@expo/vector-icons";
 import { KullaniciProfil, Cinsiyet, AktiviteSeviyesi } from "../types";
 
 interface TDEECalculatorPanelProps {
@@ -25,42 +27,13 @@ const aktiviteOptions: { key: AktiviteSeviyesi; label: string; desc: string }[] 
 ];
 
 export default function TDEECalculatorPanel({ data, setField }: TDEECalculatorPanelProps) {
+    const [modalVisible, setModalVisible] = React.useState<"cinsiyet" | "aktivite" | null>(null);
+
+    const activeAktivite = aktiviteOptions.find(o => o.key === data.aktiviteSeviyesi);
+    const activeCinsiyet = cinsiyetOptions.find(o => o.key === data.cinsiyet);
+
     return (
         <View className="w-full">
-            {/* Cinsiyet */}
-            <View className="mb-8 border-b border-slate-200/50 pb-6">
-                <Text className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-4">
-                    Cinsiyet
-                </Text>
-                <View className="flex-row">
-                    {cinsiyetOptions.map((option, idx) => (
-                        <View key={option.key} className={`flex-1 ${idx === 0 ? "mr-2" : "ml-2"}`}>
-                            <TouchableOpacity
-                                onPress={() => setField("cinsiyet", option.key)}
-                                className={`w-full flex-row items-center justify-center py-3 rounded-xl ${
-                                    data.cinsiyet === option.key
-                                        ? "bg-indigo-600"
-                                        : "bg-slate-200/50"
-                                }`}
-                                activeOpacity={0.7}
-                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                            >
-                                <Text
-                                    numberOfLines={1}
-                                    className={`text-sm font-bold tracking-wide text-center flex-shrink-0 ${
-                                        data.cinsiyet === option.key
-                                            ? "text-white"
-                                            : "text-slate-600"
-                                    }`}
-                                >
-                                    {option.label}
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
-                    ))}
-                </View>
-            </View>
-
             {/* Boy / Kilo / Yaş Inputları */}
             <View className="mb-4">
                 <NumberField
@@ -86,47 +59,100 @@ export default function TDEECalculatorPanel({ data, setField }: TDEECalculatorPa
                 />
             </View>
 
-            {/* Aktivite Seviyesi */}
-            <View className="mt-4">
-                <Text className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-4">
-                    Aktivite Seviyesi
-                </Text>
-                <View className="flex-row flex-wrap justify-between">
-                    {aktiviteOptions.map((option) => (
-                        <View key={option.key} className="w-[48%] mb-3">
-                            <TouchableOpacity
-                                onPress={() => setField("aktiviteSeviyesi", option.key)}
-                                className={`w-full px-3 py-4 rounded-xl items-center justify-center ${
-                                    data.aktiviteSeviyesi === option.key
-                                        ? "bg-indigo-600"
-                                        : "bg-slate-200/50"
-                                }`}
-                                activeOpacity={0.7}
-                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                            >
-                                <Text
-                                    className={`text-xs font-bold mb-1 text-center ${
-                                        data.aktiviteSeviyesi === option.key
-                                            ? "text-white"
-                                            : "text-slate-700"
-                                    }`}
-                                >
-                                    {option.label}
-                                </Text>
-                                <Text
-                                    className={`text-[10px] font-medium text-center ${
-                                        data.aktiviteSeviyesi === option.key
-                                            ? "text-indigo-200"
-                                            : "text-slate-500"
-                                    }`}
-                                >
-                                    {option.desc}
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
+            {/* Seçiciler (Trigger Butonlar) */}
+            <View className="mt-2 space-y-4">
+                <TouchableOpacity
+                    onPress={() => setModalVisible("cinsiyet")}
+                    className="flex-row items-center justify-between bg-white border border-slate-200 rounded-xl px-4 py-3.5 mb-3 shadow-sm"
+                    activeOpacity={0.7}
+                >
+                    <Text className="text-sm">
+                        <Text className="text-gray-500 dark:text-gray-400 font-normal">Cinsiyet: </Text>
+                        <Text className="text-gray-900 dark:text-white font-semibold">{activeCinsiyet?.label}</Text>
+                    </Text>
+                    <Feather name="chevron-down" size={20} color="#64748b" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    onPress={() => setModalVisible("aktivite")}
+                    className="flex-row items-center justify-between bg-white border border-slate-200 rounded-xl px-4 py-3.5 shadow-sm"
+                    activeOpacity={0.7}
+                >
+                    <Text className="text-sm">
+                        <Text className="text-gray-500 dark:text-gray-400 font-normal">Aktivite: </Text>
+                        <Text className="text-gray-900 dark:text-white font-semibold">{activeAktivite?.label} ({activeAktivite?.desc})</Text>
+                    </Text>
+                    <Feather name="chevron-down" size={20} color="#64748b" />
+                </TouchableOpacity>
+            </View>
+
+            {/* Alt Modallar */}
+            <Modal
+                isVisible={modalVisible === "cinsiyet"}
+                onBackdropPress={() => setModalVisible(null)}
+                onSwipeComplete={() => setModalVisible(null)}
+                swipeDirection="down"
+                backdropOpacity={0.3}
+                style={{ margin: 0, justifyContent: 'flex-end' }}
+            >
+                <View className="bg-white rounded-t-[2rem] p-6 pt-4 pb-14">
+                    {/* Drag Handle */}
+                    <View className="w-12 h-1 bg-gray-300 rounded-full self-center mb-6" />
+                    
+                    <Text className="text-xl font-bold text-slate-900 mb-6 text-center">Cinsiyet Seçimi</Text>
+                    
+                    {cinsiyetOptions.map((option) => (
+                        <TouchableOpacity
+                            key={option.key}
+                            onPress={() => { setField("cinsiyet", option.key); setModalVisible(null); }}
+                            className={`w-full py-4 px-4 rounded-xl mb-3 flex-row justify-between items-center ${
+                                data.cinsiyet === option.key ? "bg-blue-50 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800/50" : "bg-slate-50 border border-slate-100"
+                            }`}
+                        >
+                            <Text className={`text-base font-bold ${data.cinsiyet === option.key ? "text-blue-700 dark:text-blue-400" : "text-slate-700"}`}>
+                                {option.label}
+                            </Text>
+                            {data.cinsiyet === option.key && <Feather name="check" size={20} color="#3b82f6" />}
+                        </TouchableOpacity>
                     ))}
                 </View>
-            </View>
+            </Modal>
+
+            <Modal
+                isVisible={modalVisible === "aktivite"}
+                onBackdropPress={() => setModalVisible(null)}
+                onSwipeComplete={() => setModalVisible(null)}
+                swipeDirection="down"
+                backdropOpacity={0.3}
+                style={{ margin: 0, justifyContent: 'flex-end' }}
+            >
+                <View className="bg-white rounded-t-[2rem] p-6 pt-4 pb-14">
+                    {/* Drag Handle */}
+                    <View className="w-12 h-1 bg-gray-300 rounded-full self-center mb-6" />
+                    
+                    <Text className="text-xl font-bold text-slate-900 mb-6 text-center">Aktivite Seviyesi</Text>
+                    
+                    {aktiviteOptions.map((option) => (
+                        <TouchableOpacity
+                            key={option.key}
+                            onPress={() => { setField("aktiviteSeviyesi", option.key); setModalVisible(null); }}
+                            className={`w-full py-4 px-4 rounded-xl mb-3 flex-row justify-between items-center ${
+                                data.aktiviteSeviyesi === option.key ? "bg-blue-50 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800/50" : "bg-slate-50 border border-slate-100"
+                            }`}
+                        >
+                            <View>
+                                <Text className={`text-base font-bold ${data.aktiviteSeviyesi === option.key ? "text-blue-700 dark:text-blue-400" : "text-slate-700"}`}>
+                                    {option.label}
+                                </Text>
+                                <Text className={`text-xs mt-1 ${data.aktiviteSeviyesi === option.key ? "text-blue-500" : "text-slate-500"}`}>
+                                    {option.desc}
+                                </Text>
+                            </View>
+                            {data.aktiviteSeviyesi === option.key && <Feather name="check" size={20} color="#3b82f6" />}
+                        </TouchableOpacity>
+                    ))}
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -149,7 +175,7 @@ function NumberField({
             <Text className="text-xs font-bold text-slate-500 uppercase tracking-widest">
                 {label}
             </Text>
-            <View className="flex-row items-baseline">
+            <View className="flex-row items-center bg-gray-100 dark:bg-slate-800 rounded-md px-3 py-1">
                 <TextInput
                     keyboardType="numeric"
                     value={value > 0 ? String(value) : ""}
@@ -159,9 +185,9 @@ function NumberField({
                     }}
                     placeholder={placeholder}
                     placeholderTextColor="#cbd5e1"
-                    className="font-bold text-2xl text-slate-900 text-right min-w-[60px] px-0 pb-0"
+                    className="font-bold text-2xl text-slate-900 dark:text-white text-right min-w-[50px] p-0"
                 />
-                <Text className="text-sm text-slate-400 font-bold ml-1">{unit}</Text>
+                <Text className="text-sm text-slate-500 dark:text-slate-400 font-bold ml-1">{unit}</Text>
             </View>
         </View>
     );

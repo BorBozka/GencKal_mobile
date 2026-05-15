@@ -1,7 +1,8 @@
 // src/screens/DietScreen.tsx
 // Web'deki OnboardingForm Step 2 → Mobil diyet plan seçimi ekranı
 import React, { useMemo, useCallback, useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Pressable, Modal } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import Modal from "react-native-modal";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { Feather } from "@expo/vector-icons";
@@ -41,7 +42,7 @@ export default function DietScreen({ formData, tdee: initialTdee, onBack, onUpda
             iconName: "trending-up",
             iconColor: "#2563eb",
             highlight: false, 
-            borderColor: "border-l-blue-500", 
+            borderColor: "border-blue-500", 
             textColor: "text-blue-600", 
             btnBg: "bg-blue-600",
             btnText: "text-white",
@@ -53,7 +54,7 @@ export default function DietScreen({ formData, tdee: initialTdee, onBack, onUpda
             iconName: "target",
             iconColor: "#059669",
             highlight: true, 
-            borderColor: "border-l-emerald-500", 
+            borderColor: "border-emerald-500", 
             textColor: "text-emerald-600", 
             btnBg: "bg-emerald-600",
             btnText: "text-white",
@@ -65,7 +66,7 @@ export default function DietScreen({ formData, tdee: initialTdee, onBack, onUpda
             iconName: "trending-down",
             iconColor: "#e11d48",
             highlight: false, 
-            borderColor: "border-l-rose-500", 
+            borderColor: "border-rose-500", 
             textColor: "text-rose-600", 
             btnBg: "bg-rose-600",
             btnText: "text-white",
@@ -118,7 +119,7 @@ export default function DietScreen({ formData, tdee: initialTdee, onBack, onUpda
                         </Text>
                         <Text className="text-2xl font-bold text-slate-400">kcal</Text>
                     </View>
-                    <Text className="text-xs uppercase tracking-[3px] text-indigo-500/80 font-bold">
+                    <Text className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 font-medium">
                         Günlük Kalori İhtiyacınız
                     </Text>
                 </View>
@@ -131,7 +132,7 @@ export default function DietScreen({ formData, tdee: initialTdee, onBack, onUpda
                     {plans.map((plan, idx) => (
                         <View
                             key={plan.name}
-                            className={`py-6 ${idx < plans.length - 1 ? "border-b border-slate-200/50" : ""}`}
+                            className="p-5 border border-gray-200 dark:border-gray-800 rounded-2xl mb-4 bg-white dark:bg-slate-900"
                         >
                             {plan.highlight && (
                                 <Text className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-3 py-1 rounded-full self-start mb-2 uppercase tracking-wide overflow-hidden">
@@ -160,12 +161,14 @@ export default function DietScreen({ formData, tdee: initialTdee, onBack, onUpda
                             </View>
 
                             <TouchableOpacity
-                                className={`w-full py-3.5 px-4 rounded-xl items-center ${plan.btnBg}`}
+                                className={`w-full py-3.5 px-4 rounded-xl items-center ${
+                                    plan.highlight ? plan.btnBg : `bg-transparent border ${plan.borderColor}`
+                                }`}
                                 activeOpacity={0.8}
                                 onPress={() => setSelectedPlan(plan)}
                             >
                                 <Text
-                                    className={`font-bold text-sm ${plan.btnText}`}
+                                    className={`font-bold text-sm ${plan.highlight ? plan.btnText : plan.textColor}`}
                                 >
                                     Bu Planı Seç
                                 </Text>
@@ -177,39 +180,32 @@ export default function DietScreen({ formData, tdee: initialTdee, onBack, onUpda
 
             {/* Plan Detay Modalı (Bottom Sheet) */}
             <Modal
-                visible={!!selectedPlan}
-                transparent={true}
-                animationType="slide"
-                onRequestClose={() => setSelectedPlan(null)}
+                isVisible={!!selectedPlan}
+                onBackdropPress={() => setSelectedPlan(null)}
+                onSwipeComplete={() => setSelectedPlan(null)}
+                swipeDirection="down"
+                backdropOpacity={0.3}
+                style={{ margin: 0, justifyContent: 'flex-end' }}
             >
-                <View className="flex-1 bg-black/50 justify-end">
-                    <Pressable 
-                        className="flex-1" 
-                        onPress={() => setSelectedPlan(null)} 
-                    />
-                    <View className="bg-white rounded-t-[3rem] pt-8 pb-10 px-6">
-                        <View className="flex-row justify-between items-start mb-8">
-                            <View>
-                                <Text className="text-2xl font-extrabold text-slate-900 mb-1">
-                                    {selectedPlan?.name}
+                <View className="bg-white rounded-t-[3rem] pt-4 pb-14 px-6">
+                    {/* Drag Handle */}
+                    <View className="w-12 h-1 bg-gray-300 rounded-full self-center mb-6" />
+
+                    <View className="flex-row justify-between items-start mb-8">
+                        <View>
+                            <Text className="text-2xl font-extrabold text-slate-900 mb-1">
+                                {selectedPlan?.name}
+                            </Text>
+                            <View className="flex-row items-baseline gap-1">
+                                <Text className="text-lg font-black text-indigo-600">
+                                    {selectedPlan?.calories}
                                 </Text>
-                                <View className="flex-row items-baseline gap-1">
-                                    <Text className="text-lg font-black text-indigo-600">
-                                        {selectedPlan?.calories}
-                                    </Text>
-                                    <Text className="text-xs font-bold text-slate-500">
-                                        kcal / gün
-                                    </Text>
-                                </View>
+                                <Text className="text-xs font-bold text-slate-500">
+                                    kcal / gün
+                                </Text>
                             </View>
-                            <TouchableOpacity
-                                onPress={() => setSelectedPlan(null)}
-                                className="w-10 h-10 items-center justify-center bg-slate-100 rounded-full"
-                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                            >
-                                <Feather name="x" size={20} color="#64748b" />
-                            </TouchableOpacity>
                         </View>
+                    </View>
 
                         <Text className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-5">
                             Günlük Makro Dağılımı
@@ -243,7 +239,7 @@ export default function DietScreen({ formData, tdee: initialTdee, onBack, onUpda
                         </View>
                         
                         <TouchableOpacity
-                            className={`w-full py-4 mt-10 rounded-2xl items-center ${selectedPlan?.btnBg}`}
+                            className={`w-full py-4 mt-10 rounded-2xl items-center mb-4 ${selectedPlan?.btnBg}`}
                             onPress={() => setSelectedPlan(null)}
                             activeOpacity={0.8}
                         >
@@ -252,7 +248,6 @@ export default function DietScreen({ formData, tdee: initialTdee, onBack, onUpda
                             </Text>
                         </TouchableOpacity>
                     </View>
-                </View>
             </Modal>
         </SafeAreaView>
     );

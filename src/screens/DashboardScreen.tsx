@@ -60,18 +60,18 @@ export default function DashboardScreen({ onNavigateToDiet }: DashboardScreenPro
     }, []);
 
     return (
-        <SafeAreaView className="flex-1 bg-[#3E3AAF]" edges={["top"]}>
-            <StatusBar style="light" />
+        <SafeAreaView className="flex-1 bg-white dark:bg-slate-900" edges={["top"]}>
+            <StatusBar style="auto" />
 
             {/* Header */}
             <View className="px-5 pt-3 pb-4 flex-row justify-between items-center">
                 <View className="flex-row items-center gap-2">
                     <View className="flex-row items-center gap-0.5">
-                        <View className="w-1 h-3 rounded-full bg-white" />
-                        <View className="w-1 h-5 rounded-full bg-white" />
-                        <View className="w-1 h-3 rounded-full bg-white" />
+                        <View className="w-1 h-3 rounded-full bg-indigo-600 dark:bg-indigo-400" />
+                        <View className="w-1 h-5 rounded-full bg-indigo-600 dark:bg-indigo-400" />
+                        <View className="w-1 h-3 rounded-full bg-indigo-600 dark:bg-indigo-400" />
                     </View>
-                    <Text className="text-lg text-white font-bold tracking-tight">
+                    <Text className="text-lg text-slate-900 dark:text-white font-bold tracking-tight">
                         genckalculator
                     </Text>
                 </View>
@@ -81,7 +81,7 @@ export default function DashboardScreen({ onNavigateToDiet }: DashboardScreenPro
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     className="py-2 pl-2 pr-2"
                 >
-                    <Text className="text-white/95 text-sm font-semibold tracking-wide">
+                    <Text className="text-indigo-600 dark:text-indigo-400 text-sm font-semibold tracking-wide">
                         Diyet Planı
                     </Text>
                 </TouchableOpacity>
@@ -96,10 +96,10 @@ export default function DashboardScreen({ onNavigateToDiet }: DashboardScreenPro
             >
                 {/* Üst: Başlık */}
                 <View className="items-center mb-8">
-                    <Text className="text-[28px] font-normal text-white tracking-wide text-center">
+                    <Text className="text-[28px] font-normal text-slate-900 dark:text-white tracking-wide text-center">
                         GençKal Calculator
                     </Text>
-                    <Text className="text-sm text-indigo-200 font-light tracking-wide text-center mt-1">
+                    <Text className="text-sm text-slate-500 dark:text-indigo-200 font-light tracking-wide text-center mt-1">
                         Sağlık metriklerinizi ve yağsız vücut kütlenizi belirleyin
                     </Text>
                 </View>
@@ -115,7 +115,7 @@ export default function DashboardScreen({ onNavigateToDiet }: DashboardScreenPro
                 />
 
                 {/* Girdi ve Çıktı Ayrımı (Zarif Panel) */}
-                <View className="bg-white/5 rounded-t-[3rem] pt-8 px-6 -mx-5 mt-6">
+                <View className="pt-2 px-6 -mx-5">
                     {/* InputPanel */}
                     <InputPanel
                         data={formData.fizikselVeriler}
@@ -132,7 +132,7 @@ export default function DashboardScreen({ onNavigateToDiet }: DashboardScreenPro
                     )}
 
                     {/* ReferenceScale */}
-                    <View className="mt-4 pt-6 border-t border-white/10 pb-10">
+                    <View className="mt-4 pt-6 border-t border-slate-200 dark:border-slate-800 pb-10">
                         <ReferenceScale
                             score={calculatedFFMI > 0 ? calculatedFFMI : calculatedBMI}
                             type={calculatedFFMI > 0 ? "FFMI" : "BMI"}

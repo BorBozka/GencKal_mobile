@@ -53,7 +53,7 @@ export default function ReferenceScale({ score, type }: ReferenceScaleProps) {
     return (
         <View className="w-full mt-4 mb-6">
             {/* Başlık */}
-            <Text className="text-xs text-indigo-200/60 font-bold tracking-widest uppercase text-center mb-4">
+            <Text className="text-xs text-slate-500 dark:text-indigo-200/60 font-bold tracking-widest uppercase text-center mb-4">
                 {type === "BMI" ? "BMI Skalası" : "FFMI Skalası"}
             </Text>
 
@@ -62,8 +62,8 @@ export default function ReferenceScale({ score, type }: ReferenceScaleProps) {
                 <Svg width={14} height={12} viewBox="0 0 14 12">
                     <Polygon
                         points="1,1 13,1 7,11"
-                        fill="white"
-                        stroke="white"
+                        fill="#64748b"
+                        stroke="#64748b"
                         strokeWidth="1"
                         strokeLinejoin="round"
                     />
@@ -96,7 +96,7 @@ export default function ReferenceScale({ score, type }: ReferenceScaleProps) {
                         return (
                             <Text
                                 key={`start-${idx}`}
-                                className="absolute text-[10px] text-gray-400 font-medium"
+                                className="absolute text-[10px] text-slate-500 dark:text-gray-400 font-medium"
                                 style={{ left: 0, top: 0 }}
                             >
                                 {seg.min}
@@ -112,7 +112,7 @@ export default function ReferenceScale({ score, type }: ReferenceScaleProps) {
                     return (
                         <Text
                             key={`end-${idx}`}
-                            className="absolute text-[10px] text-gray-400 font-medium"
+                            className="absolute text-[10px] text-slate-500 dark:text-gray-400 font-medium"
                             style={{
                                 left: rightEdgeX,
                                 top: 0,
@@ -134,8 +134,7 @@ export default function ReferenceScale({ score, type }: ReferenceScaleProps) {
                         className="items-center"
                     >
                         <Text 
-                            className="text-[10px] tracking-tighter text-white/80 font-semibold text-center"
-                            numberOfLines={1}
+                            className="text-[9px] leading-tight tracking-tighter text-slate-700 dark:text-white/80 font-semibold text-center"
                         >
                             {seg.label}
                         </Text>

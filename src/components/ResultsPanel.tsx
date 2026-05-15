@@ -33,10 +33,10 @@ export default function ResultsPanel({
     const fatMass = (kilo * bodyFat) / 100;
 
     return (
-        <View className="w-full py-4 border-b border-white/10 mb-6">
+        <View className="w-full py-4 border-b border-slate-200 dark:border-slate-800 mb-6">
             {/* Dairesel İlerleme Çubuğu SVG */}
             <View className="items-center mb-8">
-                <View className="w-44 h-44 relative">
+                <View className="w-32 h-32 relative">
                     <Svg width="100%" height="100%" viewBox="0 0 100 100">
                         <Defs>
                             <LinearGradient
@@ -72,10 +72,10 @@ export default function ResultsPanel({
                     </Svg>
                     {/* Ortadaki BMI değeri */}
                     <View className="absolute inset-0 items-center justify-center pt-1">
-                        <Text className="text-5xl font-bold text-white tracking-tight">
+                        <Text className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight">
                             {calculatedBMI > 0 ? calculatedBMI.toFixed(1) : "0.0"}
                         </Text>
-                        <Text className="text-[10px] text-indigo-300 font-bold tracking-widest uppercase">
+                        <Text className="text-[9px] text-slate-500 dark:text-indigo-300 font-bold tracking-widest uppercase mt-0.5">
                             BMI SKORU
                         </Text>
                     </View>
@@ -83,20 +83,32 @@ export default function ResultsPanel({
             </View>
 
             {/* Alt Metrikler */}
-            <View className="gap-4 px-1">
-                <MetricRow label="Beden Kitle İndeksi" value={calculatedBMI > 0 ? calculatedBMI.toFixed(2) : "--"} />
-                <MetricRow label="BMI Durumu" value={calculatedBMI > 0 ? bmiLabel : "--"} />
-                <MetricRow label="Yağsız Vücut Kütlesi" value={leanMass > 0 ? `${leanMass.toFixed(2)} kg` : "-- kg"} />
-                <MetricRow label="Vücut Yağ Kütlesi" value={bodyFat > 0 ? `${fatMass.toFixed(2)} kg` : "-- kg"} />
+            <View className="flex-row flex-wrap px-1 -mx-2">
+                <View className="w-1/2 px-2 mb-4">
+                    <MetricRow label="Beden Kitle İndeksi" value={calculatedBMI > 0 ? calculatedBMI.toFixed(2) : "--"} />
+                </View>
+                <View className="w-1/2 px-2 mb-4">
+                    <MetricRow label="BMI Durumu" value={calculatedBMI > 0 ? bmiLabel : "--"} />
+                </View>
+                <View className="w-1/2 px-2 mb-4">
+                    <MetricRow label="Yağsız Kütle" value={leanMass > 0 ? `${leanMass.toFixed(2)} kg` : "-- kg"} />
+                </View>
+                <View className="w-1/2 px-2 mb-4">
+                    <MetricRow label="Vücut Yağ Kütlesi" value={bodyFat > 0 ? `${fatMass.toFixed(2)} kg` : "-- kg"} />
+                </View>
                 {ffmi !== undefined && (
-                    <MetricRow label="FFMI Skoru" value={ffmi.toFixed(2)} />
+                    <View className="w-1/2 px-2 mb-4">
+                        <MetricRow label="FFMI Skoru" value={ffmi.toFixed(2)} />
+                    </View>
                 )}
                 {normalizedFfmi !== undefined && (
-                    <MetricRow
-                        label="Normalize FFMI"
-                        value={normalizedFfmi.toFixed(2)}
-                        highlight
-                    />
+                    <View className="w-1/2 px-2 mb-4">
+                        <MetricRow
+                            label="Normalize FFMI"
+                            value={normalizedFfmi.toFixed(2)}
+                            highlight
+                        />
+                    </View>
                 )}
             </View>
         </View>
@@ -113,17 +125,17 @@ function MetricRow({
     highlight?: boolean;
 }) {
     return (
-        <View className="flex-row justify-between items-center">
+        <View className="flex-col justify-start items-start">
             <Text
-                className={`text-[13px] font-normal tracking-wide ${
-                    highlight ? "text-cyan-400" : "text-indigo-200/70"
+                className={`text-[12px] font-normal tracking-wide mb-0.5 ${
+                    highlight ? "text-indigo-600 dark:text-cyan-400" : "text-slate-500 dark:text-indigo-200/70"
                 }`}
             >
                 {label}
             </Text>
             <Text
-                className={`text-[13px] ${
-                    highlight ? "text-cyan-400 font-bold" : "text-white font-medium"
+                className={`text-[14px] ${
+                    highlight ? "text-indigo-600 dark:text-cyan-400 font-bold" : "text-slate-900 dark:text-white font-medium"
                 }`}
             >
                 {value}
