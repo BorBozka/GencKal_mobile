@@ -33,7 +33,7 @@ export default function ResultsPanel({
     const fatMass = (kilo * bodyFat) / 100;
 
     return (
-        <View className="w-full py-4 border-b border-slate-200 dark:border-slate-800 mb-6">
+        <View className="w-full py-4 mb-2">
             {/* Dairesel İlerleme Çubuğu SVG */}
             <View className="items-center mb-8">
                 <View className="w-32 h-32 relative">
@@ -83,26 +83,26 @@ export default function ResultsPanel({
             </View>
 
             {/* Alt Metrikler */}
-            <View className="flex-row flex-wrap px-1 -mx-2">
-                <View className="w-1/2 px-2 mb-4">
+            <View className="flex-row flex-wrap mt-4">
+                <View className="w-1/2 mb-8 pr-2">
                     <MetricRow label="Beden Kitle İndeksi" value={calculatedBMI > 0 ? calculatedBMI.toFixed(2) : "--"} />
                 </View>
-                <View className="w-1/2 px-2 mb-4">
+                <View className="w-1/2 mb-8 pl-2">
                     <MetricRow label="BMI Durumu" value={calculatedBMI > 0 ? bmiLabel : "--"} />
                 </View>
-                <View className="w-1/2 px-2 mb-4">
+                <View className="w-1/2 mb-8 pr-2">
                     <MetricRow label="Yağsız Kütle" value={leanMass > 0 ? `${leanMass.toFixed(2)} kg` : "-- kg"} />
                 </View>
-                <View className="w-1/2 px-2 mb-4">
+                <View className="w-1/2 mb-8 pl-2">
                     <MetricRow label="Vücut Yağ Kütlesi" value={bodyFat > 0 ? `${fatMass.toFixed(2)} kg` : "-- kg"} />
                 </View>
                 {ffmi !== undefined && (
-                    <View className="w-1/2 px-2 mb-4">
+                    <View className="w-1/2 mb-8 pr-2">
                         <MetricRow label="FFMI Skoru" value={ffmi.toFixed(2)} />
                     </View>
                 )}
                 {normalizedFfmi !== undefined && (
-                    <View className="w-1/2 px-2 mb-4">
+                    <View className="w-1/2 mb-8 pl-2">
                         <MetricRow
                             label="Normalize FFMI"
                             value={normalizedFfmi.toFixed(2)}
@@ -127,15 +127,15 @@ function MetricRow({
     return (
         <View className="flex-col justify-start items-start">
             <Text
-                className={`text-[12px] font-normal tracking-wide mb-0.5 ${
-                    highlight ? "text-indigo-600 dark:text-cyan-400" : "text-slate-500 dark:text-indigo-200/70"
+                className={`text-[11px] font-semibold tracking-wider mb-1 uppercase ${
+                    highlight ? "text-indigo-500 dark:text-cyan-500" : "text-slate-500 dark:text-slate-400"
                 }`}
             >
                 {label}
             </Text>
             <Text
-                className={`text-[14px] ${
-                    highlight ? "text-indigo-600 dark:text-cyan-400 font-bold" : "text-slate-900 dark:text-white font-medium"
+                className={`text-xl font-black ${
+                    highlight ? "text-indigo-600 dark:text-cyan-400" : "text-slate-900 dark:text-white"
                 }`}
             >
                 {value}

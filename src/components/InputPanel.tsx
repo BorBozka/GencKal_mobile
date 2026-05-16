@@ -16,7 +16,7 @@ export interface InputPanelProps {
 const sliderConfig = [
     { name: "boy" as const, label: "Boy", unit: "cm", min: 120, max: 220 },
     { name: "kilo" as const, label: "Kilo", unit: "kg", min: 30, max: 160 },
-    { name: "yas" as const, label: "Yaş", unit: "yaş", min: 15, max: 100 },
+
     { name: "yagOrani" as const, label: "Yağ Oranı", unit: "%", min: 1, max: 60 },
 ] as const;
 
@@ -26,13 +26,13 @@ export default function InputPanel({ data, setField }: InputPanelProps) {
             {sliderConfig.map((slider, idx) => {
                 const val = data[slider.name] || 0;
                 return (
-                    <View key={slider.name} className={`${idx < sliderConfig.length - 1 ? "border-b border-slate-200 dark:border-white/10 pb-8 mb-8" : "mb-8"}`}>
+                    <View key={slider.name} className="mb-10">
                         {/* Üst Satır: Label + Değer */}
                         <View className="flex-row justify-between items-center mb-2">
                             <Text className="text-base font-bold text-slate-700 dark:text-indigo-100 tracking-wide">
                                 {slider.label}
                             </Text>
-                            <View className="flex-row items-center bg-gray-100 dark:bg-slate-800 rounded-lg px-3 py-1">
+                            <View className="flex-row items-baseline bg-slate-100 dark:bg-slate-800 rounded-xl px-4 py-2 mr-2">
                                 <TextInput
                                     keyboardType="numeric"
                                     value={String(val)}
@@ -46,9 +46,11 @@ export default function InputPanel({ data, setField }: InputPanelProps) {
                                     }}
                                     className="text-2xl font-black text-slate-900 dark:text-white leading-none min-w-[50px] text-right p-0"
                                 />
-                                <Text className="text-sm text-slate-500 dark:text-indigo-200 font-bold ml-1">
-                                    {slider.unit}
-                                </Text>
+                                {slider.unit ? (
+                                    <Text className="text-sm text-slate-500 dark:text-indigo-200 font-bold ml-1">
+                                        {slider.unit}
+                                    </Text>
+                                ) : null}
                             </View>
                         </View>
 
@@ -63,6 +65,7 @@ export default function InputPanel({ data, setField }: InputPanelProps) {
                                 minimumTrackTintColor="#22d3ee"
                                 maximumTrackTintColor="rgba(255,255,255,0.2)"
                                 thumbTintColor="#22d3ee"
+                                style={{ height: 40, width: "100%" }}
                             />
                         </View>
 

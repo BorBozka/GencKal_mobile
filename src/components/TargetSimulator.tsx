@@ -1,6 +1,6 @@
 // src/components/TargetSimulator.tsx
 import React, { useState, useEffect } from "react";
-import { View, Text } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import Slider from "@react-native-community/slider";
 
 interface TargetSimulatorProps {
@@ -23,16 +23,28 @@ export default function TargetSimulator({
     const newBodyFat =
         targetWeight > 0 ? ((targetWeight - leanMass) / targetWeight) * 100 : 0;
     const minWeight = Math.ceil(leanMass);
+    const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
 
     return (
         <View className="w-full py-4 mb-6">
             {/* Başlık */}
-            <Text className="text-lg font-semibold text-slate-900 dark:text-slate-100 text-left mb-4">
-                Hedef Simülatörü
-            </Text>
+            <TouchableOpacity 
+                activeOpacity={0.7}
+                className="flex-row items-center mb-4"
+                onPress={() => setIsSimulatorOpen(!isSimulatorOpen)}
+            >
+                <Text className="text-lg font-semibold text-slate-900 dark:text-slate-100 text-left mr-2">
+                    Hedef Simülatörü
+                </Text>
+                <Text className="text-sm text-slate-500 dark:text-slate-400">
+                    {isSimulatorOpen ? "▲" : "▼"}
+                </Text>
+            </TouchableOpacity>
 
-            {/* Slider Alanı */}
-            <View className="gap-5 my-2 py-3">
+            {isSimulatorOpen && (
+                <View>
+                    {/* Slider Alanı */}
+            <View className="gap-4 mt-2 mb-4">
                 <View className="items-center gap-1">
                     <Text className="text-sm text-slate-500 dark:text-indigo-200/80">Hedef Kilo</Text>
                     <View className="flex-row items-baseline">
@@ -54,6 +66,7 @@ export default function TargetSimulator({
                     minimumTrackTintColor="#22d3ee"
                     maximumTrackTintColor="rgba(255,255,255,0.2)"
                     thumbTintColor="#22d3ee"
+                    style={{ height: 40, width: "100%" }}
                 />
 
                 <View className="flex-row justify-between px-1">
@@ -67,7 +80,7 @@ export default function TargetSimulator({
             </View>
 
             {/* Sonuç Paneli */}
-            <View className="w-full items-center justify-center mt-6 pt-6 border-t border-slate-200 dark:border-white/10">
+            <View className="w-full items-center justify-center pt-2 gap-1">
                 <Text className="text-sm text-slate-500 dark:text-indigo-200 font-medium mb-2 text-center">
                     Yeni Yağ Oranı
                 </Text>
@@ -75,6 +88,8 @@ export default function TargetSimulator({
                     % {newBodyFat > 0 ? newBodyFat.toFixed(1) : "0.0"}
                 </Text>
             </View>
+                </View>
+            )}
         </View>
     );
 }

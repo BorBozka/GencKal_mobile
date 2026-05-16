@@ -52,7 +52,7 @@ export default function TDEECalculatorPanel({ data, setField }: TDEECalculatorPa
                 />
                 <NumberField
                     label="Yaş"
-                    unit="yaş"
+                    unit=""
                     value={data.yas}
                     placeholder="25"
                     onChange={(v) => setField("yas", v)}
@@ -175,7 +175,7 @@ function NumberField({
             <Text className="text-xs font-bold text-slate-500 uppercase tracking-widest">
                 {label}
             </Text>
-            <View className="flex-row items-center bg-gray-100 dark:bg-slate-800 rounded-md px-3 py-1">
+            <View className="flex-row items-baseline bg-slate-100 dark:bg-slate-800 rounded-xl px-4 py-2">
                 <TextInput
                     keyboardType="numeric"
                     value={value > 0 ? String(value) : ""}
@@ -187,7 +187,7 @@ function NumberField({
                     placeholderTextColor="#cbd5e1"
                     className="font-bold text-2xl text-slate-900 dark:text-white text-right min-w-[50px] p-0"
                 />
-                <Text className="text-sm text-slate-500 dark:text-slate-400 font-bold ml-1">{unit}</Text>
+                {unit ? <Text className="text-sm text-slate-500 dark:text-slate-400 font-bold ml-1">{unit}</Text> : null}
             </View>
         </View>
     );
