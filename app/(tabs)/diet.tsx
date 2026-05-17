@@ -84,17 +84,17 @@ export default function DietTab() {
                     />
                 </View>
 
-                {/* TDEE Skor Gösterimi */}
-                <View className="items-center py-8 mb-8 border-t border-b border-slate-200/50 dark:border-slate-700/50">
-                    <View className="flex-row items-baseline gap-2 mb-1">
-                        <Text className="text-[56px] font-extrabold text-indigo-950 dark:text-white tracking-tighter">
+                {/* TDEE Skor Gösterimi (Hero Metrik) */}
+                <View className="items-center py-12 mb-10">
+                    <Text className="text-[11px] uppercase tracking-[0.3em] text-slate-400 dark:text-slate-500 font-bold mb-4">
+                        GÜNLÜK KALORİ HEDEFİ
+                    </Text>
+                    <View className="flex-row items-baseline justify-center">
+                        <Text className="text-[84px] font-black text-slate-900 dark:text-white tracking-tighter leading-none">
                             {calculatedTDEE}
                         </Text>
-                        <Text className="text-2xl font-bold text-slate-400 dark:text-slate-500">kcal</Text>
+                        <Text className="text-xl font-bold text-slate-400 dark:text-slate-500 ml-3">kcal</Text>
                     </View>
-                    <Text className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 font-medium">
-                        Günlük Kalori İhtiyacınız
-                    </Text>
                 </View>
 
                 {/* Plan Kartları */}
