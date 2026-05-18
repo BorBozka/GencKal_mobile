@@ -10,6 +10,10 @@ interface FormContextValue {
         name: K,
         value: KullaniciProfil["fizikselVeriler"][K]
     ) => void;
+    setDiyetAlan: <K extends keyof KullaniciProfil["diyetVerileri"]>(
+        name: K,
+        value: KullaniciProfil["diyetVerileri"][K]
+    ) => void;
     calculatedTDEE: number;
 }
 
@@ -45,6 +49,16 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
         }));
     }, []);
 
+    const setDiyetAlan = useCallback(<K extends keyof KullaniciProfil["diyetVerileri"]>(
+        name: K,
+        value: KullaniciProfil["diyetVerileri"][K]
+    ) => {
+        setFormData(prev => ({
+            ...prev,
+            diyetVerileri: { ...prev.diyetVerileri, [name]: value }
+        }));
+    }, []);
+
     const calculatedTDEE = useMemo(
         () => calculateTDEE(formData.fizikselVeriler),
         [formData.fizikselVeriler]
@@ -53,8 +67,9 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
     const value = useMemo(() => ({
         formData,
         setFizikselAlan,
+        setDiyetAlan,
         calculatedTDEE,
-    }), [formData, setFizikselAlan, calculatedTDEE]);
+    }), [formData, setFizikselAlan, setDiyetAlan, calculatedTDEE]);
 
     return (
         <FormContext.Provider value={value}>

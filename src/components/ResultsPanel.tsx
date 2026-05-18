@@ -1,5 +1,5 @@
 // src/components/ResultsPanel.tsx
-// Web'deki dairesel SVG gauge → react-native-svg dönüşümü
+// Web'deki dairesel SVG gauge → react-native-svg dönüşümü (Aydınlık tema kilidi)
 import React from "react";
 import { View, Text } from "react-native";
 import Svg, { Path, Defs, LinearGradient, Stop } from "react-native-svg";
@@ -72,10 +72,10 @@ export default function ResultsPanel({
                     </Svg>
                     {/* Ortadaki BMI değeri */}
                     <View className="absolute inset-0 items-center justify-center pt-1">
-                        <Text className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight">
+                        <Text className="text-4xl font-bold text-slate-900 tracking-tight">
                             {calculatedBMI > 0 ? calculatedBMI.toFixed(1) : "0.0"}
                         </Text>
-                        <Text className="text-[9px] text-slate-500 dark:text-indigo-300 font-bold tracking-widest uppercase mt-0.5">
+                        <Text className="text-[9px] text-slate-500 font-bold tracking-widest uppercase mt-0.5">
                             BMI SKORU
                         </Text>
                     </View>
@@ -128,14 +128,14 @@ function MetricRow({
         <View className="flex-col justify-start items-start">
             <Text
                 className={`text-[11px] font-semibold tracking-wider mb-1 uppercase ${
-                    highlight ? "text-indigo-500 dark:text-cyan-500" : "text-slate-500 dark:text-slate-400"
+                    highlight ? "text-indigo-500" : "text-slate-500"
                 }`}
             >
                 {label}
             </Text>
             <Text
                 className={`text-xl font-black ${
-                    highlight ? "text-indigo-600 dark:text-cyan-400" : "text-slate-900 dark:text-white"
+                    highlight ? "text-indigo-600" : "text-slate-900"
                 }`}
             >
                 {value}

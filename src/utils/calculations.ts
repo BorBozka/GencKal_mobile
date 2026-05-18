@@ -1,4 +1,3 @@
-// Web projesinden birebir aktarıldı — mantıksal değişiklik SIFIR
 import { FizikselVeriler } from '../types';
 
 export function calculateBMI(boyCm: number, kiloKg: number): number {

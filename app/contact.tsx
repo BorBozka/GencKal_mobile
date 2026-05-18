@@ -1,7 +1,7 @@
 // app/contact.tsx
-// İletişim modalı — Web iletisim/page.tsx'den mobil uyarlaması
+// İletişim modalı — Aydınlık tema kilidi uygulanmış
 import React from "react";
-import { View, Text, ScrollView, TouchableOpacity, Linking, useColorScheme } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Linking, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -16,59 +16,90 @@ interface ContactItemProps {
 }
 
 function ContactItem({ icon, iconBg, iconColor, title, subtitle, onPress }: ContactItemProps) {
-    const isDark = useColorScheme() === "dark";
     return (
         <TouchableOpacity
             onPress={onPress}
             activeOpacity={0.6}
-            className="flex-row items-center gap-4 bg-slate-50 dark:bg-slate-800 rounded-2xl px-5 py-4 mb-3"
+            className="flex-row items-center gap-4 bg-slate-50 rounded-2xl px-5 py-4 mb-3 border border-slate-100"
         >
             <View className={`w-12 h-12 rounded-xl items-center justify-center ${iconBg}`}>
                 <Feather name={icon as any} size={22} color={iconColor} />
             </View>
             <View className="flex-1">
-                <Text className="text-base font-semibold text-slate-800 dark:text-white">
+                <Text className="text-base font-semibold text-slate-800">
                     {title}
                 </Text>
-                <Text className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                <Text className="text-sm text-slate-500 mt-0.5">
                     {subtitle}
                 </Text>
             </View>
-            <Feather name="external-link" size={16} color={isDark ? "#64748b" : "#94a3b8"} />
+            <Feather name="external-link" size={16} color="#94a3b8" />
         </TouchableOpacity>
     );
 }
 
 export default function ContactScreen() {
     const router = useRouter();
-    const isDark = useColorScheme() === "dark";
 
-    const handleEmail = () => {
-        Linking.openURL("mailto:info@genckalculator.com");
+    const handleEmail = async () => {
+        const url = "mailto:info@genckalculator.com";
+        try {
+            const canOpen = await Linking.canOpenURL(url);
+            if (canOpen) {
+                await Linking.openURL(url);
+            } else {
+                Alert.alert(
+                    "E-posta Gönderilemiyor",
+                    "Cihazınızda e-posta uygulamasını açabilecek bir istemci bulunamadı."
+                );
+            }
+        } catch (error) {
+            Alert.alert("Hata", "E-posta gönderim işlemi başarısız oldu.");
+        }
     };
 
-    const handleTwitter = () => {
-        Linking.openURL("https://twitter.com/genckalculator");
+    const handleTwitter = async () => {
+        const url = "https://twitter.com/genckalculator";
+        try {
+            const canOpen = await Linking.canOpenURL(url);
+            if (canOpen) {
+                await Linking.openURL(url);
+            } else {
+                Alert.alert("Bağlantı Açılamıyor", "Tarayıcı veya ilgili uygulama açılamadı.");
+            }
+        } catch (error) {
+            Alert.alert("Hata", "Bağlantı açma işlemi başarısız oldu.");
+        }
     };
 
-    const handleFacebook = () => {
-        Linking.openURL("https://facebook.com/genckalculator");
+    const handleFacebook = async () => {
+        const url = "https://facebook.com/genckalculator";
+        try {
+            const canOpen = await Linking.canOpenURL(url);
+            if (canOpen) {
+                await Linking.openURL(url);
+            } else {
+                Alert.alert("Bağlantı Açılamıyor", "Tarayıcı veya ilgili uygulama açılamadı.");
+            }
+        } catch (error) {
+            Alert.alert("Hata", "Bağlantı açma işlemi başarısız oldu.");
+        }
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-white dark:bg-slate-900" edges={["top"]}>
+        <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
             {/* Modal Header */}
-            <View className="px-5 pt-3 pb-3 flex-row justify-between items-center border-b border-slate-100 dark:border-slate-800">
-                <Text className="text-lg font-bold text-slate-900 dark:text-white">
+            <View className="px-5 pt-3 pb-3 flex-row justify-between items-center border-b border-slate-100">
+                <Text className="text-lg font-bold text-slate-900">
                     İletişim
                 </Text>
                 <TouchableOpacity
                     onPress={() => router.back()}
                     activeOpacity={0.7}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    className="w-8 h-8 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800"
+                    className="w-8 h-8 items-center justify-center rounded-full bg-slate-100"
                 >
-                    <Feather name="x" size={18} color={isDark ? "#94a3b8" : "#64748b"} />
+                    <Feather name="x" size={18} color="#64748b" />
                 </TouchableOpacity>
             </View>
 
@@ -79,27 +110,27 @@ export default function ContactScreen() {
             >
                 {/* Hero */}
                 <View className="items-center mb-10">
-                    <View className="w-20 h-20 rounded-full bg-indigo-100 dark:bg-indigo-900/30 items-center justify-center mb-5">
-                        <Feather name="message-circle" size={36} color={isDark ? "#818cf8" : "#4f46e5"} />
+                    <View className="w-20 h-20 rounded-full bg-indigo-100 items-center justify-center mb-5">
+                        <Feather name="message-circle" size={36} color="#4f46e5" />
                     </View>
-                    <Text className="text-2xl font-bold text-slate-900 dark:text-white text-center mb-2">
+                    <Text className="text-2xl font-bold text-slate-900 text-center mb-2">
                         Bize Ulaşın
                     </Text>
-                    <Text className="text-sm text-slate-500 dark:text-slate-400 text-center leading-5 px-4">
+                    <Text className="text-sm text-slate-500 text-center leading-5 px-4">
                         Sorularınız, önerileriniz veya geri bildirimleriniz için bizimle iletişime geçebilirsiniz.
                     </Text>
                 </View>
 
                 {/* İletişim Kartları */}
                 <View className="mb-8">
-                    <Text className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">
+                    <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
                         İletişim Kanalları
                     </Text>
 
                     <ContactItem
                         icon="mail"
-                        iconBg="bg-indigo-100 dark:bg-indigo-900/30"
-                        iconColor={isDark ? "#818cf8" : "#4f46e5"}
+                        iconBg="bg-indigo-100"
+                        iconColor="#4f46e5"
                         title="E-posta"
                         subtitle="info@genckalculator.com"
                         onPress={handleEmail}
@@ -107,8 +138,8 @@ export default function ContactScreen() {
 
                     <ContactItem
                         icon="twitter"
-                        iconBg="bg-sky-100 dark:bg-sky-900/30"
-                        iconColor={isDark ? "#38bdf8" : "#0284c7"}
+                        iconBg="bg-sky-100"
+                        iconColor="#0284c7"
                         title="Twitter"
                         subtitle="@genckalculator"
                         onPress={handleTwitter}
@@ -116,8 +147,8 @@ export default function ContactScreen() {
 
                     <ContactItem
                         icon="facebook"
-                        iconBg="bg-blue-100 dark:bg-blue-900/30"
-                        iconColor={isDark ? "#60a5fa" : "#2563eb"}
+                        iconBg="bg-blue-100"
+                        iconColor="#2563eb"
                         title="Facebook"
                         subtitle="genckalculator"
                         onPress={handleFacebook}
@@ -125,18 +156,18 @@ export default function ContactScreen() {
                 </View>
 
                 {/* Footer */}
-                <View className="items-center pt-6 border-t border-slate-100 dark:border-slate-800">
+                <View className="items-center pt-6 border-t border-slate-100">
                     <View className="flex-row items-center gap-2 mb-2">
                         <View className="flex-row items-center gap-0.5">
-                            <View className="w-1 h-3 rounded-full bg-indigo-600 dark:bg-indigo-400" />
-                            <View className="w-1 h-5 rounded-full bg-indigo-600 dark:bg-indigo-400" />
-                            <View className="w-1 h-3 rounded-full bg-indigo-600 dark:bg-indigo-400" />
+                            <View className="w-1 h-3 rounded-full bg-indigo-600" />
+                            <View className="w-1 h-5 rounded-full bg-indigo-600" />
+                            <View className="w-1 h-3 rounded-full bg-indigo-600" />
                         </View>
-                        <Text className="text-sm text-slate-900 dark:text-white font-bold tracking-tight">
+                        <Text className="text-sm text-slate-900 font-bold tracking-tight">
                             genckalculator
                         </Text>
                     </View>
-                    <Text className="text-[10px] text-slate-300 dark:text-slate-600 mt-1">
+                    <Text className="text-[10px] text-slate-300 mt-1">
                         © {new Date().getFullYear()} GençKal Calculator. Tüm Hakları Saklıdır.
                     </Text>
                 </View>

@@ -1,31 +1,57 @@
-// app/(tabs)/_layout.tsx
 import React from "react";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import { Tabs } from "expo-router";
+import * as Haptics from "expo-haptics";
+import { BlurView } from "expo-blur";
 import { Calculator, UtensilsCrossed, Settings } from "lucide-react-native";
-import { useColorScheme } from "react-native";
 
 export default function TabsLayout() {
-    const colorScheme = useColorScheme();
-    const isDark = colorScheme === "dark";
+    const isDark = false;
 
     return (
         <Tabs
             screenOptions={{
-                headerShown: false,
-                tabBarActiveTintColor: isDark ? "#818cf8" : "#4f46e5",
-                tabBarInactiveTintColor: isDark ? "#64748b" : "#94a3b8",
-                tabBarStyle: {
-                    backgroundColor: isDark ? "#0f172a" : "#ffffff",
-                    borderTopColor: isDark ? "#1e293b" : "#f1f5f9",
-                    borderTopWidth: 1,
-                    paddingBottom: 8,
-                    paddingTop: 8,
-                    height: 64,
+                headerShown: true,
+                headerStyle: {
+                    backgroundColor: "#ffffff",
+                    elevation: 0,
+                    shadowOpacity: 0,
+                    borderBottomWidth: 0,
                 },
+                headerTitleAlign: "center",
+                headerTitle: () => (
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
+                            <View style={{ width: 4, height: 12, borderRadius: 2, backgroundColor: "#4338ca" }} />
+                            <View style={{ width: 4, height: 20, borderRadius: 2, backgroundColor: "#4338ca" }} />
+                            <View style={{ width: 4, height: 12, borderRadius: 2, backgroundColor: "#4338ca" }} />
+                        </View>
+                        <Text style={{ fontSize: 18, fontWeight: "700", color: "#4338ca", letterSpacing: -0.3 }}>
+                            genckalculator
+                        </Text>
+                    </View>
+                ),
+                tabBarActiveTintColor: "#4338ca",
+                tabBarInactiveTintColor: "#9ca3af",
+                tabBarShowLabel: true,
                 tabBarLabelStyle: {
-                    fontSize: 11,
-                    fontWeight: "600",
+                    fontSize: 10,
+                    fontWeight: "700",
                     letterSpacing: 0.3,
+                    marginBottom: 2,
+                },
+                tabBarStyle: {
+                    backgroundColor: "#ffffff",
+                    borderTopWidth: 1,
+                    borderTopColor: "#f1f5f9",
+                    height: Platform.OS === "ios" ? 88 : 68,
+                    paddingBottom: Platform.OS === "ios" ? 28 : 12,
+                    paddingTop: 10,
+                    elevation: 8,
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: -4 },
+                    shadowOpacity: 0.03,
+                    shadowRadius: 8,
                 },
             }}
         >
@@ -37,6 +63,11 @@ export default function TabsLayout() {
                         <Calculator size={size} color={color} strokeWidth={2} />
                     ),
                 }}
+                listeners={{
+                    tabPress: () => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                    },
+                }}
             />
             <Tabs.Screen
                 name="diet"
@@ -46,6 +77,11 @@ export default function TabsLayout() {
                         <UtensilsCrossed size={size} color={color} strokeWidth={2} />
                     ),
                 }}
+                listeners={{
+                    tabPress: () => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                    },
+                }}
             />
             <Tabs.Screen
                 name="settings"
@@ -54,6 +90,11 @@ export default function TabsLayout() {
                     tabBarIcon: ({ color, size }) => (
                         <Settings size={size} color={color} strokeWidth={2} />
                     ),
+                }}
+                listeners={{
+                    tabPress: () => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                    },
                 }}
             />
         </Tabs>

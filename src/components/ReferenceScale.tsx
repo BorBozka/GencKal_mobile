@@ -1,6 +1,7 @@
 // src/components/ReferenceScale.tsx
+// Aydınlık tema kilidi uygulanmış ReferenceScale
 import React, { useMemo } from "react";
-import { View, Text, Dimensions } from "react-native";
+import { View, Text, useWindowDimensions } from "react-native";
 import Svg, { Polygon } from "react-native-svg";
 import type { Cinsiyet } from "../types";
 
@@ -32,12 +33,13 @@ const FFMI_SEGMENTS: Segment[] = [
     { label: "Şüpheli", min: 25, max: 31, color: "#ef4444" },
 ];
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
+
 const H_PADDING = 16;
 const BAR_HEIGHT = 14;
 const GAP = 3;
 
 export default function ReferenceScale({ score, type }: ReferenceScaleProps) {
+    const { width: SCREEN_WIDTH } = useWindowDimensions();
     const segments = type === "BMI" ? BMI_SEGMENTS : FFMI_SEGMENTS;
     const scaleMin = segments[0].min;
     const scaleMax = segments[segments.length - 1].max;
@@ -53,7 +55,7 @@ export default function ReferenceScale({ score, type }: ReferenceScaleProps) {
     return (
         <View className="w-full mt-4 mb-6">
             {/* Başlık */}
-            <Text className="text-xs text-slate-500 dark:text-indigo-200/60 font-bold tracking-widest uppercase text-center mb-4">
+            <Text className="text-xs text-slate-500 font-bold tracking-widest uppercase text-center mb-4">
                 {type === "BMI" ? "BMI Skalası" : "FFMI Skalası"}
             </Text>
 
@@ -96,7 +98,7 @@ export default function ReferenceScale({ score, type }: ReferenceScaleProps) {
                         return (
                             <Text
                                 key={`start-${idx}`}
-                                className="absolute text-[10px] text-slate-500 dark:text-gray-400 font-medium"
+                                className="absolute text-[10px] text-slate-500 font-medium"
                                 style={{ left: 0, top: 0 }}
                             >
                                 {seg.min}
@@ -112,7 +114,7 @@ export default function ReferenceScale({ score, type }: ReferenceScaleProps) {
                     return (
                         <Text
                             key={`end-${idx}`}
-                            className="absolute text-[10px] text-slate-500 dark:text-gray-400 font-medium"
+                            className="absolute text-[10px] text-slate-500 font-medium"
                             style={{
                                 left: rightEdgeX,
                                 top: 0,
@@ -134,7 +136,7 @@ export default function ReferenceScale({ score, type }: ReferenceScaleProps) {
                         className="items-center"
                     >
                         <Text 
-                            className="text-[9px] leading-tight tracking-tighter text-slate-700 dark:text-white/80 font-semibold text-center"
+                            className="text-[9px] leading-tight tracking-tighter text-slate-700 font-semibold text-center"
                         >
                             {seg.label}
                         </Text>

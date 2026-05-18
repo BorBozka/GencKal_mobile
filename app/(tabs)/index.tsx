@@ -1,8 +1,9 @@
 // app/(tabs)/index.tsx
-// Hesaplayıcı sekmesi — DashboardScreen'den uyarlandı
+// Hesaplayıcı sekmesi (Aydınlık tema kilidi uygulanmış)
 import React, { useMemo } from "react";
 import { View, Text, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Tabs } from "expo-router";
 
 import { useFormContext } from "../../src/context/FormContext";
 import { calculateBMI, calculateDetailedFFMI } from "../../src/utils/calculations";
@@ -23,8 +24,9 @@ export default function CalculatorTab() {
     );
 
     return (
-        <SafeAreaView className="flex-1 bg-white dark:bg-slate-900" edges={['top']}>
-
+        <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+            {/* Disable native sticky header for this screen */}
+            <Tabs.Screen options={{ headerShown: false }} />
 
             {/* Scrollable Content */}
             <ScrollView
@@ -34,22 +36,22 @@ export default function CalculatorTab() {
                 contentContainerStyle={{ paddingBottom: 40 }}
                 keyboardShouldPersistTaps="handled"
             >
-                {/* Header Logo */}
-                <View className="items-center mt-8 mb-8">
-                    <View className="flex-row items-center gap-2">
-                        <View className="flex-row items-center gap-0.5">
-                            <View className="w-1 h-3 rounded-full bg-indigo-600 dark:bg-indigo-400" />
-                            <View className="w-1 h-5 rounded-full bg-indigo-600 dark:bg-indigo-400" />
-                            <View className="w-1 h-3 rounded-full bg-indigo-600 dark:bg-indigo-400" />
+                {/* 1. Inline Logo Brand Header (Official desktop logo) */}
+                <View style={{ alignItems: "center", marginTop: 16, marginBottom: 24 }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
+                            <View style={{ width: 4, height: 12, borderRadius: 2, backgroundColor: "#4338ca" }} />
+                            <View style={{ width: 4, height: 20, borderRadius: 2, backgroundColor: "#4338ca" }} />
+                            <View style={{ width: 4, height: 12, borderRadius: 2, backgroundColor: "#4338ca" }} />
                         </View>
-                        <Text className="text-lg text-slate-900 dark:text-white font-bold tracking-tight">
+                        <Text style={{ fontSize: 18, fontWeight: "700", color: "#4338ca", letterSpacing: -0.3 }}>
                             genckalculator
                         </Text>
                     </View>
                 </View>
 
                 {/* Girdi Paneli (En Üstte) */}
-                <View className="pt-0">
+                <View className="pt-4">
                     <InputPanel
                         data={formData.fizikselVeriler}
                         setField={setFizikselAlan}

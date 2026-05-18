@@ -1,5 +1,3 @@
-// Web projesinden birebir aktarıldı (zod bağımlılığı kaldırıldı - mobilde gereksiz)
-
 export type Cinsiyet = "erkek" | "kadın";
 
 export type AktiviteSeviyesi =

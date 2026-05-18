@@ -1,4 +1,5 @@
 // src/components/TDEECalculatorPanel.tsx
+// Aydınlık tema kilidi uygulanmış TDEECalculatorPanel
 import React from "react";
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import Modal from "react-native-modal";
@@ -34,19 +35,19 @@ export default function TDEECalculatorPanel({ data, setField }: TDEECalculatorPa
     return (
         <View className="w-full">
             {/* Cinsiyet Seçimi (Elegant Segmented Control) */}
-            <View className="flex-row bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-1 mb-8">
+            <View className="bg-slate-100 p-1 flex-row rounded-2xl mb-6">
                 {cinsiyetOptions.map((option) => (
                     <TouchableOpacity
                         key={option.key}
                         onPress={() => setField("cinsiyet", option.key)}
                         activeOpacity={0.8}
-                        className={`flex-1 py-3 rounded-[14px] items-center ${
+                        className={`flex-1 py-2.5 items-center ${
                             data.cinsiyet === option.key 
-                                ? "bg-white dark:bg-slate-800 shadow-sm" 
-                                : ""
+                                ? "bg-slate-800 rounded-xl shadow-sm" 
+                                : "bg-transparent"
                         }`}
                     >
-                        <Text className={`text-[13px] font-bold ${data.cinsiyet === option.key ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-500"}`}>
+                        <Text className={data.cinsiyet === option.key ? "text-white font-bold" : "text-slate-500 font-medium"}>
                             {option.label}
                         </Text>
                     </TouchableOpacity>
@@ -54,7 +55,7 @@ export default function TDEECalculatorPanel({ data, setField }: TDEECalculatorPa
             </View>
 
             {/* Boy / Kilo / Yaş Inputları (Dashboard Feel) */}
-            <View className="flex-row gap-4 mb-8">
+            <View className="flex-row gap-3 mb-6">
                 <CompactNumberField
                     label="BOY"
                     unit="cm"
@@ -81,51 +82,64 @@ export default function TDEECalculatorPanel({ data, setField }: TDEECalculatorPa
             {/* Aktivite Seçicisi (Minimalist Native Feel) */}
             <TouchableOpacity
                 onPress={() => setModalVisible("aktivite")}
-                className="flex-row items-center justify-between bg-slate-50 dark:bg-slate-900/30 rounded-2xl px-5 py-5"
+                className="bg-slate-50 p-4 rounded-2xl flex-row justify-between items-center mt-6 border border-slate-100"
                 activeOpacity={0.7}
             >
-                <View className="flex-1">
-                    <Text className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1.5">Aktivite Seviyesi</Text>
-                    <Text className="text-[15px] text-slate-900 dark:text-white font-semibold" numberOfLines={1}>
-                        {activeAktivite?.label} <Text className="text-slate-400 dark:text-slate-500 font-normal">({activeAktivite?.desc})</Text>
-                    </Text>
-                </View>
-                <Feather name="chevron-right" size={18} color="#94a3b8" />
+                <Text className="text-[15px] text-slate-800 font-medium tracking-tight">
+                    {activeAktivite?.label} <Text className="text-slate-400 font-normal">({activeAktivite?.desc})</Text>
+                </Text>
+                <Feather name="chevron-down" size={18} color="#94a3b8" />
             </TouchableOpacity>
 
             {/* Aktivite Modalı */}
             <Modal
                 isVisible={modalVisible === "aktivite"}
                 onBackdropPress={() => setModalVisible(null)}
+                onBackButtonPress={() => setModalVisible(null)}
                 onSwipeComplete={() => setModalVisible(null)}
                 swipeDirection="down"
-                backdropOpacity={0.4}
+                propagateSwipe={true}
                 style={{ margin: 0, justifyContent: 'flex-end' }}
+                backdropColor="black"
+                backdropOpacity={0.4}
+                animationIn="slideInUp"
+                animationOut="slideOutDown"
+                animationInTiming={350}
+                animationOutTiming={300}
+                backdropTransitionInTiming={350}
+                backdropTransitionOutTiming={300}
+                statusBarTranslucent={true}
+                deviceHeight={undefined}
+                deviceWidth={undefined}
             >
-                <View className="bg-white dark:bg-slate-900 rounded-t-[3rem] p-6 pt-4 pb-14">
-                    <View className="w-12 h-1 bg-slate-200 dark:bg-slate-800 rounded-full self-center mb-8" />
+                <View className="bg-white rounded-t-[3rem] p-6 pt-4 pb-14 shadow-2xl">
+                    <View className="w-12 h-1.5 bg-slate-200 rounded-full self-center mb-8" />
                     
-                    <Text className="text-xl font-bold text-slate-900 dark:text-white mb-6 text-center">Aktivite Seviyesi</Text>
+                    <Text className="text-xl font-bold text-slate-900 mb-6 text-center">Aktivite Seviyesi</Text>
                     
-                    {aktiviteOptions.map((option) => (
-                        <TouchableOpacity
-                            key={option.key}
-                            onPress={() => { setField("aktiviteSeviyesi", option.key); setModalVisible(null); }}
-                            className={`w-full py-5 px-5 rounded-2xl mb-3 flex-row justify-between items-center ${
-                                data.aktiviteSeviyesi === option.key ? "bg-slate-100 dark:bg-slate-800" : "bg-transparent"
-                            }`}
-                        >
-                            <View>
-                                <Text className={`text-[16px] font-bold ${data.aktiviteSeviyesi === option.key ? "text-slate-900 dark:text-white" : "text-slate-500"}`}>
-                                    {option.label}
-                                </Text>
-                                <Text className={`text-[12px] mt-1 ${data.aktiviteSeviyesi === option.key ? "text-slate-500" : "text-slate-400"}`}>
-                                    {option.desc}
-                                </Text>
-                            </View>
-                            {data.aktiviteSeviyesi === option.key && <Feather name="check" size={20} color="#6366f1" />}
-                        </TouchableOpacity>
-                    ))}
+                    {aktiviteOptions.map((option) => {
+                        const isSelected = data.aktiviteSeviyesi === option.key;
+                        return (
+                            <TouchableOpacity
+                                key={option.key}
+                                onPress={() => { setField("aktiviteSeviyesi", option.key); setModalVisible(null); }}
+                                className={`w-full py-5 px-5 rounded-2xl mb-3 flex-row justify-between items-center ${
+                                    isSelected ? "bg-indigo-50/70 border border-indigo-100" : "bg-transparent"
+                                }`}
+                                activeOpacity={0.7}
+                            >
+                                <View>
+                                    <Text className={`text-[16px] font-bold ${isSelected ? "text-indigo-900" : "text-slate-500"}`}>
+                                        {option.label}
+                                    </Text>
+                                    <Text className={`text-[12px] mt-1 ${isSelected ? "text-indigo-600/70" : "text-slate-400"}`}>
+                                        {option.desc}
+                                    </Text>
+                                </View>
+                                {isSelected && <Feather name="check" size={20} color="#4338ca" />}
+                            </TouchableOpacity>
+                        );
+                    })}
                 </View>
             </Modal>
         </View>
@@ -147,10 +161,10 @@ function CompactNumberField({
 }) {
     return (
         <View className="flex-1">
-            <Text className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2.5 text-center">
+            <Text className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1.5 text-center">
                 {label}
             </Text>
-            <View className="bg-slate-50 dark:bg-slate-900/30 rounded-[20px] px-2 py-4 items-center justify-center">
+            <View className="bg-slate-50 rounded-[24px] px-1 py-3 items-center justify-center border border-slate-100">
                 <View className="flex-row items-baseline">
                     <TextInput
                         keyboardType="numeric"
@@ -161,9 +175,9 @@ function CompactNumberField({
                         }}
                         placeholder={placeholder}
                         placeholderTextColor="#94a3b8"
-                        className="font-black text-2xl text-slate-900 dark:text-white text-center p-0"
+                        className="font-black text-3xl text-slate-900 text-center p-0"
                     />
-                    {unit ? <Text className="text-[11px] text-slate-400 dark:text-slate-500 font-bold ml-0.5">{unit}</Text> : null}
+                    {unit ? <Text className="text-[10px] text-slate-400 font-bold ml-0.5">{unit}</Text> : null}
                 </View>
             </View>
         </View>
