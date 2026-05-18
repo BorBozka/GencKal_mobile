@@ -13,42 +13,84 @@ interface TableRowProps {
 }
 
 function TableRow({ cells, isHeader, highlight }: TableRowProps) {
-    let bgClass = "";
-    let textClass = "text-slate-700";
+    let backgroundColor = "#ffffff";
+    let textColor = "#475569";
+    let fontWeight: "400" | "500" | "600" | "700" | "800" = "500";
 
     if (isHeader) {
-        bgClass = "bg-indigo-50";
-        textClass = "text-indigo-900";
+        backgroundColor = "#eef2ff"; // bg-indigo-50
+        textColor = "#4338ca";       // text-indigo-700
+        fontWeight = "700";
     } else if (highlight === "green") {
-        bgClass = "bg-emerald-50";
-        textClass = "text-emerald-800";
+        backgroundColor = "#ecfdf5"; // bg-emerald-50
+        textColor = "#065f46";       // text-emerald-800
+        fontWeight = "700";
     } else if (highlight === "yellow") {
-        bgClass = "bg-yellow-50";
+        backgroundColor = "#fffbeb"; // bg-amber-50
+        textColor = "#92400e";       // text-amber-800
+        fontWeight = "600";
     } else if (highlight === "orange") {
-        bgClass = "bg-orange-50";
+        backgroundColor = "#fff7ed"; // bg-orange-50
+        textColor = "#c2410c";       // text-orange-800
+        fontWeight = "600";
     } else if (highlight === "red") {
-        bgClass = "bg-red-50";
+        backgroundColor = "#fef2f2"; // bg-red-50
+        textColor = "#b91c1c";       // text-red-800
+        fontWeight = "600";
     } else if (highlight === "red-bold") {
-        bgClass = "bg-red-100";
-        textClass = "text-red-900";
+        backgroundColor = "#fee2e2"; // bg-red-100
+        textColor = "#7f1d1d";       // text-red-900
+        fontWeight = "700";
     }
 
     return (
-        <View className={`flex-row border-b border-slate-200 ${bgClass}`}>
-            {cells.map((cell, i) => (
-                <View key={i} className={`flex-1 px-3 py-3 ${i === 0 ? "" : "border-l border-slate-200"}`}>
-                    <Text className={`text-sm ${isHeader ? "font-bold" : "font-medium"} ${textClass}`}>
-                        {cell}
-                    </Text>
-                </View>
-            ))}
+        <View style={{
+            flexDirection: "row",
+            backgroundColor: backgroundColor,
+            borderBottomWidth: 1,
+            borderBottomColor: "#e2e8f0"
+        }}>
+            {cells.map((cell, i) => {
+                let flexValue = 1;
+                if (cells.length === 3) {
+                    if (i === 0) flexValue = 1.0;       // FFMI
+                    else if (i === 1) flexValue = 1.1;  // Yağ Oranı
+                    else if (i === 2) flexValue = 2.0;  // Açıklama
+                } else if (cells.length === 2) {
+                    if (i === 0) flexValue = 1.5;       // Sınıflandırma
+                    else if (i === 1) flexValue = 1.0;  // BMI Aralığı
+                }
+
+                return (
+                    <View
+                        key={i}
+                        style={{
+                            flex: flexValue,
+                            paddingHorizontal: 12,
+                            paddingVertical: 12,
+                            borderLeftWidth: i === 0 ? 0 : 1,
+                            borderLeftColor: "#e2e8f0",
+                            justifyContent: "center"
+                        }}
+                    >
+                        <Text style={{
+                            fontSize: 12,
+                            fontWeight: fontWeight,
+                            color: textColor,
+                            lineHeight: 16
+                        }}>
+                            {cell}
+                        </Text>
+                    </View>
+                );
+            })}
         </View>
     );
 }
 
 function SectionTitle({ children }: { children: string }) {
     return (
-        <Text className="text-xl font-bold text-indigo-900 mb-3 mt-6">
+        <Text style={{ fontSize: 20, fontWeight: "800", color: "#4338ca", marginTop: 24, marginBottom: 8 }}>
             {children}
         </Text>
     );
@@ -56,7 +98,7 @@ function SectionTitle({ children }: { children: string }) {
 
 function SubTitle({ children }: { children: string }) {
     return (
-        <Text className="text-lg font-semibold text-indigo-800 mb-2 mt-4">
+        <Text style={{ fontSize: 16, fontWeight: "700", color: "#312e81", marginTop: 18, marginBottom: 8 }}>
             {children}
         </Text>
     );
@@ -64,7 +106,7 @@ function SubTitle({ children }: { children: string }) {
 
 function FormulaBox({ children }: { children: React.ReactNode }) {
     return (
-        <View className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6">
+        <View style={{ backgroundColor: "#f8fafc", padding: 16, borderRadius: 16, borderWidth: 1, borderColor: "#e2e8f0", marginBottom: 16 }}>
             {children}
         </View>
     );
@@ -72,10 +114,10 @@ function FormulaBox({ children }: { children: React.ReactNode }) {
 
 function BulletItem({ bold, text }: { bold: string; text: string }) {
     return (
-        <View className="flex-row mb-2 pl-2">
-            <Text className="text-slate-500 mr-2">•</Text>
-            <Text className="text-sm text-slate-700 flex-1 leading-5">
-                <Text className="font-bold">{bold}</Text> {text}
+        <View style={{ flexDirection: "row", marginBottom: 8, paddingLeft: 4 }}>
+            <Text style={{ color: "#94a3b8", marginRight: 8, fontSize: 14 }}>•</Text>
+            <Text style={{ fontSize: 13, color: "#475569", flex: 1, lineHeight: 18 }}>
+                <Text style={{ fontWeight: "700", color: "#0f172a" }}>{bold}</Text> {text}
             </Text>
         </View>
     );
@@ -87,15 +129,15 @@ export default function InformationScreen() {
     return (
         <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
             {/* Modal Header */}
-            <View className="px-5 pt-3 pb-3 flex-row justify-between items-center border-b border-slate-100">
-                <Text className="text-lg font-bold text-slate-900">
+            <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 12, flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderBottomWidth: 1, borderBottomColor: "#f1f5f9" }}>
+                <Text style={{ fontSize: 18, fontWeight: "800", color: "#0f172a" }}>
                     Bilgilendirme
                 </Text>
                 <TouchableOpacity
                     onPress={() => router.back()}
                     activeOpacity={0.7}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    className="w-8 h-8 items-center justify-center rounded-full bg-slate-100"
+                    style={{ width: 32, height: 32, alignItems: "center", justifyContent: "center", borderRadius: 16, backgroundColor: "#f1f5f9" }}
                 >
                     <Feather name="x" size={18} color="#64748b" />
                 </TouchableOpacity>
@@ -104,27 +146,27 @@ export default function InformationScreen() {
             <ScrollView
                 className="flex-1"
                 showsVerticalScrollIndicator={false}
-                contentContainerClassName="px-5 py-4 pb-16"
+                contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 48 }}
             >
-                {/* ===== BMI BÖLÜMÜ ===== */}
+                {/* Sol Kolon: BMI Bölümü */}
                 <SectionTitle>BMI (Vücut Kitle İndeksi) Nedir?</SectionTitle>
-                <Text className="text-sm text-slate-600 leading-6 mb-4">
+                <Text style={{ fontSize: 14, color: "#475569", lineHeight: 22, marginBottom: 12 }}>
                     BMI, boyunuza ve kilonuza dayanarak zayıflık veya şişmanlık derecenizi ölçen, doku kütlesini ölçmeyi amaçlayan bir hesaplamadır. Bir kişinin boyuna göre sağlıklı bir vücut ağırlığına sahip olup olmadığının genel bir göstergesi olarak yaygın şekilde kullanılır.
                 </Text>
 
                 <SubTitle>BMI Formülü</SubTitle>
                 <FormulaBox>
-                    <Text className="text-sm font-mono text-slate-700 mb-1">
-                        BMI = Kilo (kg) / ( Boy (m) × Boy (m) )
+                    <Text style={{ fontSize: 13, fontFamily: "monospace", color: "#334155", marginBottom: 4 }}>
+                        BMI = Kilo (kg) / ( Boy (m) * Boy (m) )
                     </Text>
-                    <Text className="text-sm font-mono text-indigo-600 font-bold mt-2">
-                        Örnek: 75 kg / (1.75 × 1.75) = 24.49
+                    <Text style={{ fontSize: 13, fontFamily: "monospace", color: "#4338ca", fontWeight: "700" }}>
+                        Örnek: 75 kg / (1.75 * 1.75) = 24.49
                     </Text>
                 </FormulaBox>
 
                 <SubTitle>Yetişkinler İçin BMI Tablosu (DSÖ)</SubTitle>
-                <View className="rounded-xl border border-slate-200 overflow-hidden mb-6">
-                    <TableRow cells={["Sınıflandırma", "BMI Aralığı"]} isHeader />
+                <View style={{ borderRadius: 16, borderWidth: 1, borderColor: "#e2e8f0", overflow: "hidden", marginBottom: 16 }}>
+                    <TableRow cells={["Sınıflandırma", "BMI Aralığı (kg/m²)"]} isHeader />
                     <TableRow cells={["İleri Derece Zayıflık", "< 16"]} />
                     <TableRow cells={["Orta Derece Zayıflık", "16 - 17"]} />
                     <TableRow cells={["Hafif Zayıflık", "17 - 18.5"]} />
@@ -136,28 +178,28 @@ export default function InformationScreen() {
                 </View>
 
                 <SubTitle>BMI'nin Sınırları</SubTitle>
-                <Text className="text-sm text-slate-600 leading-6 mb-3">
+                <Text style={{ fontSize: 14, color: "#475569", lineHeight: 22, marginBottom: 10 }}>
                     BMI sağlıklı vücut ağırlığını belirlemek için yaygın olsa da, kas ve yağ oranını dikkate almayan sadece bir tahmindir.
                 </Text>
                 <BulletItem bold="Sporcular:" text="Kas yağdan daha ağır olduğu için yüksek kas kütlesine sahip kişiler BMI'ye göre 'Obez' çıkabilir, ancak aslında son derece sağlıklıdırlar." />
                 <BulletItem bold="Yaşlı Yetişkinler:" text="Aynı BMI değerine sahip gençlere kıyasla daha fazla vücut yağına sahip olma eğilimindedirler." />
 
                 {/* Fazla Kilo / Düşük Kilo Riskleri */}
-                <View className="flex-row gap-3 mt-4 mb-6">
-                    <View className="flex-1 bg-red-50 rounded-xl p-4">
-                        <Text className="text-sm font-bold text-red-700 mb-2">Fazla Kilo Riskleri</Text>
-                        <Text className="text-xs text-slate-600 leading-5">
+                <View style={{ flexDirection: "row", gap: 12, marginTop: 12, marginBottom: 16 }}>
+                    <View style={{ flex: 1, backgroundColor: "#fef2f2", borderRadius: 16, padding: 12, borderWidth: 1, borderColor: "#fee2e2" }}>
+                        <Text style={{ fontSize: 14, fontWeight: "700", color: "#991b1b", marginBottom: 6 }}>Fazla Kilo Riskleri</Text>
+                        <Text style={{ fontSize: 12, color: "#7f1d1d", lineHeight: 18 }}>
                             • Yüksek tansiyon ve kolesterol{'\n'}
                             • Tip II diyabet{'\n'}
                             • Koroner kalp hastalığı{'\n'}
                             • Uyku apnesi
                         </Text>
                     </View>
-                    <View className="flex-1 bg-yellow-50 rounded-xl p-4">
-                        <Text className="text-sm font-bold text-yellow-700 mb-2">Düşük Kilo Riskleri</Text>
-                        <Text className="text-xs text-slate-600 leading-5">
+                    <View style={{ flex: 1, backgroundColor: "#fffbeb", borderRadius: 16, padding: 12, borderWidth: 1, borderColor: "#fef3c7" }}>
+                        <Text style={{ fontSize: 14, fontWeight: "700", color: "#92400e", marginBottom: 6 }}>Düşük Kilo Riskleri</Text>
+                        <Text style={{ fontSize: 12, color: "#78350f", lineHeight: 18 }}>
                             • Yetersiz beslenme ve anemi{'\n'}
-                            • Osteoporoz{'\n'}
+                            • Osteoporoz (Kemik erimesi){'\n'}
                             • Zayıf bağışıklık sistemi{'\n'}
                             • Büyüme sorunları
                         </Text>
@@ -165,50 +207,50 @@ export default function InformationScreen() {
                 </View>
 
                 {/* Divider */}
-                <View className="h-px bg-slate-200 my-4" />
+                <View style={{ height: 1, backgroundColor: "#f1f5f9", marginVertical: 16 }} />
 
-                {/* ===== FFMI BÖLÜMÜ ===== */}
+                {/* FFMI Bölümü */}
                 <SectionTitle>FFMI (Yağsız Vücut Kütlesi İndeksi) Nedir?</SectionTitle>
-                <Text className="text-sm text-slate-600 leading-6 mb-4">
-                    FFMI, boyunuza oranla ne kadar kas kütlesine sahip olduğunuzu hesaplamanızı sağlayan bir indekstir. Vücut geliştiriciler ve sporcular tarafından gelişimlerini takip etmek için yaygın olarak kullanılır ve BMI'ye göre çok daha güvenilirdir.
+                <Text style={{ fontSize: 14, color: "#475569", lineHeight: 22, marginBottom: 12 }}>
+                    FFMI, boyunuza oranla ne kadar kas kütlesine sahip olduğunuzu hesaplamanızı sağlayan bir indekstir. Bu indeks, vücut geliştiriciler ve sporcular tarafından gelişimlerini takip etmek için yaygın olarak kullanılır ve BMI'ye göre çok daha güvenilirdir.
                 </Text>
 
                 <SubTitle>FFMI Formülü</SubTitle>
                 <FormulaBox>
-                    <Text className="text-xs font-mono text-slate-700 mb-1">
-                        Vücut Yağı = Kilo × (Yağ Oranı [%] / 100)
+                    <Text style={{ fontSize: 12, fontFamily: "monospace", color: "#334155", marginBottom: 2 }}>
+                        Vücut Yağı = Kilo * (Yağ Oranı [%] / 100)
                     </Text>
-                    <Text className="text-xs font-mono text-slate-700 mb-1">
+                    <Text style={{ fontSize: 12, fontFamily: "monospace", color: "#334155", marginBottom: 2 }}>
                         Yağsız Kütle = Kilo - Vücut Yağı
                     </Text>
-                    <Text className="text-xs font-mono text-slate-700 mb-1">
+                    <Text style={{ fontSize: 12, fontFamily: "monospace", color: "#334155", marginBottom: 4 }}>
                         FFMI = Yağsız Kütle (kg) / Boy (m)²
                     </Text>
-                    <Text className="text-xs font-mono text-indigo-600 font-bold mt-2">
-                        Norm. FFMI = FFMI + 6.1 × (1.8 - Boy (m))
+                    <Text style={{ fontSize: 12, fontFamily: "monospace", color: "#4338ca", fontWeight: "700" }}>
+                        Norm. FFMI = FFMI + 6.1 * (1.8 - Boy (m))
                     </Text>
                 </FormulaBox>
 
                 <SubTitle>Erkekler İçin FFMI Skorları</SubTitle>
-                <View className="rounded-xl border border-slate-200 overflow-hidden mb-6">
+                <View style={{ borderRadius: 16, borderWidth: 1, borderColor: "#e2e8f0", overflow: "hidden", marginBottom: 16 }}>
                     <TableRow cells={["FFMI", "Yağ Oranı", "Açıklama"]} isHeader />
-                    <TableRow cells={["17-18", "10-18%", "Zayıf"]} />
-                    <TableRow cells={["18-20", "20-27%", "Ortalama"]} />
-                    <TableRow cells={["19-21", "25-40%", "Kilolu"]} />
-                    <TableRow cells={["20-21", "10-18%", "Sporcu / Orta"]} />
-                    <TableRow cells={["22-23", "6-12%", "İleri Sporcu"]} />
-                    <TableRow cells={["24-25", "8-20%", "Vücut Gel."]} />
+                    <TableRow cells={["17 - 18", "10 - 18%", "Zayıf"]} />
+                    <TableRow cells={["18 - 20", "20 - 27%", "Ortalama"]} />
+                    <TableRow cells={["19 - 21", "25 - 40%", "Kilolu"]} />
+                    <TableRow cells={["20 - 21", "10 - 18%", "Sporcu / Orta Seviye"]} />
+                    <TableRow cells={["22 - 23", "6 - 12%", "İleri Seviye Sporcu"]} />
+                    <TableRow cells={["24 - 25", "8 - 20%", "Vücut Geliştirici"]} />
                 </View>
 
                 <SubTitle>Kadınlar İçin FFMI Skorları</SubTitle>
-                <View className="rounded-xl border border-slate-200 overflow-hidden mb-6">
+                <View style={{ borderRadius: 16, borderWidth: 1, borderColor: "#e2e8f0", overflow: "hidden", marginBottom: 8 }}>
                     <TableRow cells={["FFMI", "Yağ Oranı", "Açıklama"]} isHeader />
-                    <TableRow cells={["14-15", "20-25%", "Zayıf"]} />
-                    <TableRow cells={["14-17", "22-35%", "Ortalama"]} />
-                    <TableRow cells={["15-18", "30-45%", "Kilolu"]} />
-                    <TableRow cells={["16-17", "18-25%", "Sporcu / Orta"]} />
-                    <TableRow cells={["18-20", "15-22%", "İleri Sporcu"]} />
-                    <TableRow cells={["19-21", "15-30%", "Vücut Gel."]} />
+                    <TableRow cells={["14 - 15", "20 - 25%", "Zayıf"]} />
+                    <TableRow cells={["14 - 17", "22 - 35%", "Ortalama"]} />
+                    <TableRow cells={["15 - 18", "30 - 45%", "Kilolu"]} />
+                    <TableRow cells={["16 - 17", "18 - 25%", "Sporcu / Orta Seviye"]} />
+                    <TableRow cells={["18 - 20", "15 - 22%", "İleri Seviye Sporcu"]} />
+                    <TableRow cells={["19 - 21", "15 - 30%", "Vücut Geliştirici"]} />
                 </View>
             </ScrollView>
         </SafeAreaView>

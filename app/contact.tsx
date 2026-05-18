@@ -4,39 +4,7 @@ import React from "react";
 import { View, Text, ScrollView, TouchableOpacity, Linking, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { Feather } from "@expo/vector-icons";
-
-interface ContactItemProps {
-    icon: string;
-    iconBg: string;
-    iconColor: string;
-    title: string;
-    subtitle: string;
-    onPress: () => void;
-}
-
-function ContactItem({ icon, iconBg, iconColor, title, subtitle, onPress }: ContactItemProps) {
-    return (
-        <TouchableOpacity
-            onPress={onPress}
-            activeOpacity={0.6}
-            className="flex-row items-center gap-4 bg-slate-50 rounded-2xl px-5 py-4 mb-3 border border-slate-100"
-        >
-            <View className={`w-12 h-12 rounded-xl items-center justify-center ${iconBg}`}>
-                <Feather name={icon as any} size={22} color={iconColor} />
-            </View>
-            <View className="flex-1">
-                <Text className="text-base font-semibold text-slate-800">
-                    {title}
-                </Text>
-                <Text className="text-sm text-slate-500 mt-0.5">
-                    {subtitle}
-                </Text>
-            </View>
-            <Feather name="external-link" size={16} color="#94a3b8" />
-        </TouchableOpacity>
-    );
-}
+import { Ionicons } from "@expo/vector-icons";
 
 export default function ContactScreen() {
     const router = useRouter();
@@ -59,27 +27,27 @@ export default function ContactScreen() {
     };
 
     const handleTwitter = async () => {
-        const url = "https://twitter.com/genckalculator";
+        const url = "https://twitter.com/genckalcalculator";
         try {
             const canOpen = await Linking.canOpenURL(url);
             if (canOpen) {
                 await Linking.openURL(url);
             } else {
-                Alert.alert("Bağlantı Açılamıyor", "Tarayıcı veya ilgili uygulama açılamadı.");
+                Alert.alert("Bağlantı Açılamıyor", "Tarayıcı veya Twitter uygulaması açılamadı.");
             }
         } catch (error) {
             Alert.alert("Hata", "Bağlantı açma işlemi başarısız oldu.");
         }
     };
 
-    const handleFacebook = async () => {
-        const url = "https://facebook.com/genckalculator";
+    const handleInstagram = async () => {
+        const url = "https://instagram.com/genckalcalculator";
         try {
             const canOpen = await Linking.canOpenURL(url);
             if (canOpen) {
                 await Linking.openURL(url);
             } else {
-                Alert.alert("Bağlantı Açılamıyor", "Tarayıcı veya ilgili uygulama açılamadı.");
+                Alert.alert("Bağlantı Açılamıyor", "Tarayıcı veya Instagram uygulaması açılamadı.");
             }
         } catch (error) {
             Alert.alert("Hata", "Bağlantı açma işlemi başarısız oldu.");
@@ -89,86 +57,141 @@ export default function ContactScreen() {
     return (
         <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
             {/* Modal Header */}
-            <View className="px-5 pt-3 pb-3 flex-row justify-between items-center border-b border-slate-100">
-                <Text className="text-lg font-bold text-slate-900">
+            <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 12, flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderBottomWidth: 1, borderBottomColor: "#f1f5f9" }}>
+                <Text style={{ fontSize: 18, fontWeight: "800", color: "#0f172a" }}>
                     İletişim
                 </Text>
                 <TouchableOpacity
                     onPress={() => router.back()}
                     activeOpacity={0.7}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    className="w-8 h-8 items-center justify-center rounded-full bg-slate-100"
+                    style={{ width: 32, height: 32, alignItems: "center", justifyContent: "center", borderRadius: 16, backgroundColor: "#f1f5f9" }}
                 >
-                    <Feather name="x" size={18} color="#64748b" />
+                    <Ionicons name="close" size={20} color="#64748b" />
                 </TouchableOpacity>
             </View>
 
             <ScrollView
                 className="flex-1"
                 showsVerticalScrollIndicator={false}
-                contentContainerClassName="px-5 py-8 pb-16"
+                contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: 48 }}
             >
-                {/* Hero */}
-                <View className="items-center mb-10">
-                    <View className="w-20 h-20 rounded-full bg-indigo-100 items-center justify-center mb-5">
-                        <Feather name="message-circle" size={36} color="#4f46e5" />
+                {/* Hero Section */}
+                <View style={{ alignItems: "center", marginBottom: 32 }}>
+                    <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: "#eef2ff", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
+                        <Ionicons name="chatbubble-ellipses" size={32} color="#4338ca" />
                     </View>
-                    <Text className="text-2xl font-bold text-slate-900 text-center mb-2">
+                    <Text style={{ fontSize: 24, fontWeight: "800", color: "#0f172a", textAlign: "center", marginBottom: 6 }}>
                         Bize Ulaşın
                     </Text>
-                    <Text className="text-sm text-slate-500 text-center leading-5 px-4">
-                        Sorularınız, önerileriniz veya geri bildirimleriniz için bizimle iletişime geçebilirsiniz.
+                    <Text style={{ fontSize: 14, color: "#64748b", textAlign: "center", lineHeight: 22, paddingHorizontal: 16 }}>
+                        Sorularınız, önerileriniz veya geri bildirimleriniz için aşağıdaki kanallardan bizimle iletişime geçebilirsiniz.
                     </Text>
                 </View>
 
-                {/* İletişim Kartları */}
+                {/* Tek ve Bütünleşik İletişim Kartı */}
                 <View className="mb-8">
-                    <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
-                        İletişim Kanalları
+                    <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 pl-1">
+                        İLETİŞİM KANALLARI
                     </Text>
+                    
+                    <View style={{ backgroundColor: "#f8fafc", borderRadius: 20, overflow: "hidden", borderWidth: 1, borderColor: "#f1f5f9" }}>
+                        {/* Satır 1: E-posta */}
+                        <TouchableOpacity
+                            onPress={handleEmail}
+                            activeOpacity={0.6}
+                            style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                paddingHorizontal: 20,
+                                paddingVertical: 14
+                            }}
+                        >
+                            <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+                                <View style={{ width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: "#eef2ff", marginRight: 14 }}>
+                                    <Ionicons name="mail-outline" size={18} color="#4338ca" />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={{ fontSize: 15, fontWeight: "600", color: "#1e293b" }}>
+                                        E-posta
+                                    </Text>
+                                    <Text style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>
+                                        info@genckalculator.com
+                                    </Text>
+                                </View>
+                            </View>
+                            <Ionicons name="open-outline" size={16} color="#94a3b8" />
+                        </TouchableOpacity>
 
-                    <ContactItem
-                        icon="mail"
-                        iconBg="bg-indigo-100"
-                        iconColor="#4f46e5"
-                        title="E-posta"
-                        subtitle="info@genckalculator.com"
-                        onPress={handleEmail}
-                    />
+                        {/* İndentasyonlu Bölücü Çizgi */}
+                        <View style={{ height: 1, backgroundColor: "#f1f5f9", marginLeft: 70 }} />
 
-                    <ContactItem
-                        icon="twitter"
-                        iconBg="bg-sky-100"
-                        iconColor="#0284c7"
-                        title="Twitter"
-                        subtitle="@genckalculator"
-                        onPress={handleTwitter}
-                    />
+                        {/* Satır 2: Twitter */}
+                        <TouchableOpacity
+                            onPress={handleTwitter}
+                            activeOpacity={0.6}
+                            style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                paddingHorizontal: 20,
+                                paddingVertical: 14
+                            }}
+                        >
+                            <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+                                <View style={{ width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: "#eef2ff", marginRight: 14 }}>
+                                    <Ionicons name="logo-twitter" size={18} color="#4338ca" />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={{ fontSize: 15, fontWeight: "600", color: "#1e293b" }}>
+                                        Twitter
+                                    </Text>
+                                    <Text style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>
+                                        @genckalculator
+                                    </Text>
+                                </View>
+                            </View>
+                            <Ionicons name="open-outline" size={16} color="#94a3b8" />
+                        </TouchableOpacity>
 
-                    <ContactItem
-                        icon="facebook"
-                        iconBg="bg-blue-100"
-                        iconColor="#2563eb"
-                        title="Facebook"
-                        subtitle="genckalculator"
-                        onPress={handleFacebook}
-                    />
+                        {/* İndentasyonlu Bölücü Çizgi */}
+                        <View style={{ height: 1, backgroundColor: "#f1f5f9", marginLeft: 70 }} />
+
+                        {/* Satır 3: Instagram */}
+                        <TouchableOpacity
+                            onPress={handleInstagram}
+                            activeOpacity={0.6}
+                            style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                paddingHorizontal: 20,
+                                paddingVertical: 14
+                            }}
+                        >
+                            <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+                                <View style={{ width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: "#eef2ff", marginRight: 14 }}>
+                                    <Ionicons name="logo-instagram" size={18} color="#4338ca" />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={{ fontSize: 15, fontWeight: "600", color: "#1e293b" }}>
+                                        Instagram
+                                    </Text>
+                                    <Text style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>
+                                        @genckalcalculator
+                                    </Text>
+                                </View>
+                            </View>
+                            <Ionicons name="open-outline" size={16} color="#94a3b8" />
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
-                {/* Footer */}
-                <View className="items-center pt-6 border-t border-slate-100">
-                    <View className="flex-row items-center gap-2 mb-2">
-                        <View className="flex-row items-center gap-0.5">
-                            <View className="w-1 h-3 rounded-full bg-indigo-600" />
-                            <View className="w-1 h-5 rounded-full bg-indigo-600" />
-                            <View className="w-1 h-3 rounded-full bg-indigo-600" />
-                        </View>
-                        <Text className="text-sm text-slate-900 font-bold tracking-tight">
-                            genckalculator
-                        </Text>
-                    </View>
-                    <Text className="text-[10px] text-slate-300 mt-1">
-                        © {new Date().getFullYear()} GençKal Calculator. Tüm Hakları Saklıdır.
+                {/* 3. MINIMAL DETACHED FOOTER */}
+                <View style={{ alignItems: "center", marginTop: 48, marginBottom: 16 }}>
+                    <Text style={{ fontSize: 12, fontWeight: "500", color: "#94a3b8", letterSpacing: 0.5, textAlign: "center" }}>
+                        © 2026 GençKal Calculator. Tüm Hakları Saklıdır.
                     </Text>
                 </View>
             </ScrollView>
