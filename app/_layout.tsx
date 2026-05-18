@@ -10,7 +10,7 @@ export default function RootLayout() {
     return (
         <FormProvider>
             <SafeAreaProvider>
-                <StatusBar style="auto" />
+                <StatusBar style="dark" translucent={false} backgroundColor="#ffffff" hidden={false} />
                 <Stack
                     screenOptions={{
                         headerShown: false,

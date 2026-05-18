@@ -1,4 +1,4 @@
-export type Cinsiyet = "erkek" | "kadın";
+export type Cinsiyet = "erkek" | "kadin";
 
 export type AktiviteSeviyesi =
     | "hareketsiz (ofis işi)"

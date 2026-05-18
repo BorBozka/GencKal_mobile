@@ -16,7 +16,7 @@ interface TDEECalculatorPanelProps {
 
 const cinsiyetOptions: { key: Cinsiyet; label: string }[] = [
     { key: "erkek", label: "Erkek" },
-    { key: "kadın", label: "Kadın" },
+    { key: "kadin", label: "Kadın" },
 ];
 
 const aktiviteOptions: { key: AktiviteSeviyesi; label: string; desc: string }[] = [
@@ -35,19 +35,46 @@ export default function TDEECalculatorPanel({ data, setField }: TDEECalculatorPa
     return (
         <View className="w-full">
             {/* Cinsiyet Seçimi (Elegant Segmented Control) */}
-            <View className="bg-slate-100 p-1 flex-row rounded-2xl mb-6">
+            <View
+                style={{
+                    backgroundColor: "#f1f5f9",
+                    padding: 4,
+                    flexDirection: "row",
+                    borderRadius: 16,
+                    marginBottom: 24,
+                }}
+            >
                 {cinsiyetOptions.map((option) => (
                     <TouchableOpacity
                         key={option.key}
                         onPress={() => setField("cinsiyet", option.key)}
                         activeOpacity={0.8}
-                        className={`flex-1 py-2.5 items-center ${
-                            data.cinsiyet === option.key 
-                                ? "bg-slate-800 rounded-xl shadow-sm" 
-                                : "bg-transparent"
-                        }`}
+                        style={[
+                            {
+                                flex: 1,
+                                paddingVertical: 10,
+                                alignItems: "center",
+                                justifyContent: "center",
+                                borderRadius: 12,
+                            },
+                            data.cinsiyet === option.key ? {
+                                backgroundColor: "#1e293b",
+                                shadowColor: "#0f172a",
+                                shadowOffset: { width: 0, height: 1 },
+                                shadowOpacity: 0.05,
+                                shadowRadius: 2,
+                                elevation: 2,
+                            } : {
+                                backgroundColor: "transparent",
+                            }
+                        ]}
                     >
-                        <Text className={data.cinsiyet === option.key ? "text-white font-bold" : "text-slate-500 font-medium"}>
+                        <Text
+                            style={{
+                                color: data.cinsiyet === option.key ? "#ffffff" : "#64748b",
+                                fontWeight: data.cinsiyet === option.key ? "700" : "500",
+                            }}
+                        >
                             {option.label}
                         </Text>
                     </TouchableOpacity>
@@ -123,16 +150,44 @@ export default function TDEECalculatorPanel({ data, setField }: TDEECalculatorPa
                             <TouchableOpacity
                                 key={option.key}
                                 onPress={() => { setField("aktiviteSeviyesi", option.key); setModalVisible(null); }}
-                                className={`w-full py-5 px-5 rounded-2xl mb-3 flex-row justify-between items-center ${
-                                    isSelected ? "bg-indigo-50/70 border border-indigo-100" : "bg-transparent"
-                                }`}
+                                style={[
+                                    {
+                                        width: "100%",
+                                        paddingVertical: 20,
+                                        paddingHorizontal: 20,
+                                        borderRadius: 16,
+                                        marginBottom: 12,
+                                        flexDirection: "row",
+                                        justifyContent: "space-between",
+                                        alignItems: "center",
+                                    },
+                                    isSelected ? {
+                                        backgroundColor: "rgba(238, 242, 255, 0.7)",
+                                        borderWidth: 1,
+                                        borderColor: "#e0e7ff",
+                                    } : {
+                                        backgroundColor: "transparent",
+                                    }
+                                ]}
                                 activeOpacity={0.7}
                             >
                                 <View>
-                                    <Text className={`text-[16px] font-bold ${isSelected ? "text-indigo-900" : "text-slate-500"}`}>
+                                    <Text
+                                        style={{
+                                            fontSize: 16,
+                                            fontWeight: "700",
+                                            color: isSelected ? "#312e81" : "#64748b",
+                                        }}
+                                    >
                                         {option.label}
                                     </Text>
-                                    <Text className={`text-[12px] mt-1 ${isSelected ? "text-indigo-600/70" : "text-slate-400"}`}>
+                                    <Text
+                                        style={{
+                                            fontSize: 12,
+                                            marginTop: 4,
+                                            color: isSelected ? "rgba(79, 70, 229, 0.7)" : "#94a3b8",
+                                        }}
+                                    >
                                         {option.desc}
                                     </Text>
                                 </View>

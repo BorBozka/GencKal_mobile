@@ -599,24 +599,23 @@ export default function DietTab() {
         <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
             <Tabs.Screen options={{ headerShown: false }} />
 
-            {/* Marka Logo Başlığı */}
-            <View style={styles.brandHeader}>
-                <View style={styles.brandLogoRow}>
-                    <View style={styles.brandSignalBars}>
-                        <View style={[styles.signalBar, { height: 12 }]} />
-                        <View style={[styles.signalBar, { height: 20 }]} />
-                        <View style={[styles.signalBar, { height: 12 }]} />
-                    </View>
-                    <Text style={styles.brandTitle}>genckalculator</Text>
-                </View>
-            </View>
-
             <ScrollView
                 className="flex-1"
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 40 }}
+                contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 }}
                 keyboardShouldPersistTaps="handled"
             >
+                {/* Marka Logo Başlığı (Hesaplayıcı sayfasıyla birebir aynı konum ve stilde, sayfa ile kaydırılabilir) */}
+                <View style={[styles.brandHeader, { paddingVertical: 0, paddingBottom: 16 }]}>
+                    <View style={styles.brandLogoRow}>
+                        <View style={styles.brandSignalBars}>
+                            <View style={[styles.signalBar, { height: 12 }]} />
+                            <View style={[styles.signalBar, { height: 20 }]} />
+                            <View style={[styles.signalBar, { height: 12 }]} />
+                        </View>
+                        <Text style={styles.brandTitle}>genckalculator</Text>
+                    </View>
+                </View>
                 {/* ================= STEP 1: SELECT PLAN ================= */}
                 {step === "select-plan" && (
                     <View>
@@ -644,7 +643,21 @@ export default function DietTab() {
                             {plans.map(plan => {
                                 const isActive = activePlan === plan.id;
                                 return (
-                                    <View key={plan.id} style={styles.planCard}>
+                                    <TouchableOpacity
+                                        key={plan.id}
+                                        style={[
+                                            styles.planCard,
+                                            isActive && { borderColor: plan.iconColor, borderWidth: 1.8 }
+                                        ]}
+                                        activeOpacity={0.9}
+                                        onPress={() => {
+                                            setActivePlan(plan.id);
+                                            let actualTarget: "kilo_al" | "kilo_koruma" | "kilo_ver" = "kilo_koruma";
+                                            if (plan.id === "Bulk") actualTarget = "kilo_al";
+                                            else if (plan.id === "Cut") actualTarget = "kilo_ver";
+                                            setDiyetAlan("hedef", actualTarget);
+                                        }}
+                                    >
                                         {plan.id === 'Maintain' && (
                                             <View style={styles.currentStatusBadge}>
                                                 <Text style={styles.currentStatusBadgeText}>MEVCUT DURUM</Text>
@@ -674,7 +687,7 @@ export default function DietTab() {
                                                 Bu Planı Seç
                                             </Text>
                                         </TouchableOpacity>
-                                    </View>
+                                    </TouchableOpacity>
                                 );
                             })}
                         </View>

@@ -33,11 +33,11 @@ export default function CalculatorTab() {
                 className="flex-1"
                 style={{ paddingHorizontal: 24 }}
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 40 }}
+                contentContainerStyle={{ paddingTop: 16, paddingBottom: 40 }}
                 keyboardShouldPersistTaps="handled"
             >
-                {/* 1. Inline Logo Brand Header (Official desktop logo) */}
-                <View style={{ alignItems: "center", marginTop: 16, marginBottom: 24 }}>
+                {/* Marka Logo Başlığı (Diyet planı sayfasıyla birebir aynı konum ve stilde, sayfa ile kaydırılabilir) */}
+                <View style={{ alignItems: "center", paddingBottom: 16, backgroundColor: "#ffffff" }}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
                             <View style={{ width: 4, height: 12, borderRadius: 2, backgroundColor: "#4338ca" }} />
