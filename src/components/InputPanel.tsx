@@ -21,13 +21,25 @@ const sliderConfig = [
 ] as const;
 
 export default function InputPanel({ data, setField }: InputPanelProps) {
+    // Haptic ref — useEffect yerine ilk erişimde lazy-init (3.10)
     const lastHapticValues = React.useRef<Record<string, number>>({});
 
+    // 3.2: Her slider için yerel state — context'i her piksel hareketinde değil,
+    // yalnızca sürükleme bittiğinde (onSlidingComplete) güncelle
+    const [localVals, setLocalVals] = React.useState<Record<string, number>>(() => {
+        const init: Record<string, number> = {};
+        sliderConfig.forEach(s => { init[s.name] = data[s.name] || 0; });
+        return init;
+    });
+
+    // data prop değişirse (context dışından — örn. reset) yerel state'i sync et
     React.useEffect(() => {
-        sliderConfig.forEach((slider) => {
-            lastHapticValues.current[slider.name] = data[slider.name] || 0;
+        setLocalVals(prev => {
+            const next = { ...prev };
+            sliderConfig.forEach(s => { next[s.name] = data[s.name] || 0; });
+            return next;
         });
-    }, []);
+    }, [data]);
 
     return (
         <View className="w-full">
@@ -47,7 +59,9 @@ export default function InputPanel({ data, setField }: InputPanelProps) {
                                     onChangeText={(text) => {
                                         const num = parseInt(text, 10);
                                         if (!isNaN(num)) {
-                                            setField(slider.name, num);
+                                            // 2.5: Klavye girişini slider sınırlarıyla sınırla
+                                            const clamped = Math.max(slider.min, Math.min(slider.max, num));
+                                            setField(slider.name, clamped);
                                         } else if (text === "") {
                                             setField(slider.name, 0);
                                         }
@@ -68,14 +82,21 @@ export default function InputPanel({ data, setField }: InputPanelProps) {
                                 minimumValue={slider.min}
                                 maximumValue={slider.max}
                                 step={1}
-                                value={Math.max(slider.min, val)}
+                                value={Math.max(slider.min, localVals[slider.name] ?? val)}
                                 onValueChange={(v) => {
                                     const rounded = Math.round(v);
+                                    setLocalVals(prev => ({ ...prev, [slider.name]: rounded }));
+                                    // Haptic: yalnızca değer değiştiğinde tetikle
                                     if (lastHapticValues.current[slider.name] !== rounded) {
                                         lastHapticValues.current[slider.name] = rounded;
                                         Haptics.selectionAsync().catch(() => {});
                                     }
-                                    setField(slider.name, rounded);
+                                }}
+                                onSlidingComplete={(v) => {
+                                    // 3.2: Context’e yalnızca sürükleme bitince yaz
+                                    const rounded = Math.round(v);
+                                    const clamped = Math.max(slider.min, Math.min(slider.max, rounded));
+                                    setField(slider.name, clamped);
                                 }}
                                 minimumTrackTintColor="#4338ca"
                                 maximumTrackTintColor="rgba(0,0,0,0.1)"

@@ -18,19 +18,7 @@ export function getBMICategory(bmi: number): { label: string; colorClass: string
     return { label: "Obezite", colorClass: "text-red-500 bg-red-500", percentage };
 }
 
-export function calculateFFMI(boyCm: number, kiloKg: number, yagOrani?: number): number {
-    if (boyCm <= 0 || kiloKg <= 0) return 0;
-
-    if (yagOrani === undefined || yagOrani < 0 || yagOrani > 100) return 0;
-
-    const yagsizKutle = kiloKg * (1 - (yagOrani / 100));
-    const boyM = boyCm / 100;
-    const ffmi = yagsizKutle / (boyM * boyM);
-
-    const normalizedFfmi = ffmi + 6.1 * (1.8 - boyM);
-
-    return Number(normalizedFfmi.toFixed(2));
-}
+// calculateFFMI kaldırıldı (3.8) — calculateDetailedFFMI ile duplicate, projede kullanılmıyor.
 
 // Tüm verileri tek seferde döndüren fonksiyon
 export function calculateDetailedFFMI(boyCm: number, kiloKg: number, yagOrani?: number): { leanMass: number; ffmi: number; normalizedFfmi: number } {

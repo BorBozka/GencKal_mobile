@@ -1,21 +1,21 @@
-// app/(tabs)/index.tsx
-// Hesaplayıcı sekmesi (Aydınlık tema kilidi uygulanmış)
 import React, { useMemo } from "react";
-import { View, Text, ScrollView } from "react-native";
+import { View, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Tabs } from "expo-router";
 
-import { useFormContext } from "../../src/context/FormContext";
+import { useFizikselContext } from "../../src/context/FormContext";
 import { calculateBMI, calculateDetailedFFMI } from "../../src/utils/calculations";
 
+import BrandLogo from "../../src/components/BrandLogo";
 import InputPanel from "../../src/components/InputPanel";
 import ResultsPanel from "../../src/components/ResultsPanel";
 import TargetSimulator from "../../src/components/TargetSimulator";
 import ReferenceScale from "../../src/components/ReferenceScale";
 
 export default function CalculatorTab() {
-    const { formData, setFizikselAlan } = useFormContext();
-    const { boy, kilo, yagOrani } = formData.fizikselVeriler;
+    // 3.3: Yalnızca fiziksel verileri dinle — diyet değiştiğinde re-render olmaz
+    const { fizikselVeriler, setFizikselAlan } = useFizikselContext();
+    const { boy, kilo, yagOrani } = fizikselVeriler;
 
     const calculatedBMI = useMemo(() => calculateBMI(boy, kilo), [boy, kilo]);
     const { leanMass, ffmi: rawFFMI, normalizedFfmi: calculatedFFMI } = useMemo(
@@ -36,24 +36,13 @@ export default function CalculatorTab() {
                 contentContainerStyle={{ paddingTop: 16, paddingBottom: 40 }}
                 keyboardShouldPersistTaps="handled"
             >
-                {/* Marka Logo Başlığı (Diyet planı sayfasıyla birebir aynı konum ve stilde, sayfa ile kaydırılabilir) */}
-                <View style={{ alignItems: "center", paddingBottom: 16, backgroundColor: "#ffffff" }}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
-                            <View style={{ width: 4, height: 12, borderRadius: 2, backgroundColor: "#4338ca" }} />
-                            <View style={{ width: 4, height: 20, borderRadius: 2, backgroundColor: "#4338ca" }} />
-                            <View style={{ width: 4, height: 12, borderRadius: 2, backgroundColor: "#4338ca" }} />
-                        </View>
-                        <Text style={{ fontSize: 18, fontWeight: "700", color: "#4338ca", letterSpacing: -0.3 }}>
-                            genckalculator
-                        </Text>
-                    </View>
-                </View>
+                {/* Marka Logo Başlığı — 3.5: BrandLogo bileşeni */}
+                <BrandLogo />
 
                 {/* Girdi Paneli (En Üstte) */}
                 <View className="pt-4">
                     <InputPanel
-                        data={formData.fizikselVeriler}
+                        data={fizikselVeriler}
                         setField={setFizikselAlan}
                     />
 
@@ -62,7 +51,7 @@ export default function CalculatorTab() {
                         <ReferenceScale
                             score={calculatedFFMI > 0 ? calculatedFFMI : calculatedBMI}
                             type={calculatedFFMI > 0 ? "FFMI" : "BMI"}
-                            gender={formData.fizikselVeriler.cinsiyet}
+                            gender={fizikselVeriler.cinsiyet}
                         />
                     </View>
                 </View>

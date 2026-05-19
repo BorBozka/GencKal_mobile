@@ -6,53 +6,31 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
+// 2.6: Tüm marka referansları tek bir yerde — tutarlılık için
+const BRAND = {
+    email: "info@genckalculator.com",
+    twitterHandle: "@genckalculator",
+    twitterUrl: "https://twitter.com/genckalculator",
+    instagramHandle: "@genckalculator",
+    instagramUrl: "https://instagram.com/genckalculator",
+} as const;
+
 export default function ContactScreen() {
     const router = useRouter();
 
-    const handleEmail = async () => {
-        const url = "mailto:info@genckalculator.com";
-        try {
-            const canOpen = await Linking.canOpenURL(url);
-            if (canOpen) {
-                await Linking.openURL(url);
-            } else {
-                Alert.alert(
-                    "E-posta Gönderilemiyor",
-                    "Cihazınızda e-posta uygulamasını açabilecek bir istemci bulunamadı."
-                );
-            }
-        } catch (error) {
-            Alert.alert("Hata", "E-posta gönderim işlemi başarısız oldu.");
+// 3.7: Tek bir genel yardımcı — üç duplicate handler yerine
+const openLink = async (url: string, errorTitle = "Bağlantı Açılamıyor") => {
+    try {
+        const canOpen = await Linking.canOpenURL(url);
+        if (canOpen) {
+            await Linking.openURL(url);
+        } else {
+            Alert.alert(errorTitle, "Uygulama veya tarayıcı açılamadı.");
         }
-    };
-
-    const handleTwitter = async () => {
-        const url = "https://twitter.com/genckalcalculator";
-        try {
-            const canOpen = await Linking.canOpenURL(url);
-            if (canOpen) {
-                await Linking.openURL(url);
-            } else {
-                Alert.alert("Bağlantı Açılamıyor", "Tarayıcı veya Twitter uygulaması açılamadı.");
-            }
-        } catch (error) {
-            Alert.alert("Hata", "Bağlantı açma işlemi başarısız oldu.");
-        }
-    };
-
-    const handleInstagram = async () => {
-        const url = "https://instagram.com/genckalcalculator";
-        try {
-            const canOpen = await Linking.canOpenURL(url);
-            if (canOpen) {
-                await Linking.openURL(url);
-            } else {
-                Alert.alert("Bağlantı Açılamıyor", "Tarayıcı veya Instagram uygulaması açılamadı.");
-            }
-        } catch (error) {
-            Alert.alert("Hata", "Bağlantı açma işlemi başarısız oldu.");
-        }
-    };
+    } catch {
+        Alert.alert("Hata", "Bağlantı açma işlemi başarısız oldu.");
+    }
+};
 
     return (
         <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
@@ -98,7 +76,7 @@ export default function ContactScreen() {
                     <View style={{ backgroundColor: "#f8fafc", borderRadius: 20, overflow: "hidden", borderWidth: 1, borderColor: "#f1f5f9" }}>
                         {/* Satır 1: E-posta */}
                         <TouchableOpacity
-                            onPress={handleEmail}
+                            onPress={() => openLink(`mailto:${BRAND.email}`, "E-posta Gönderilemiyor")}
                             activeOpacity={0.6}
                             style={{
                                 flexDirection: "row",
@@ -117,7 +95,7 @@ export default function ContactScreen() {
                                         E-posta
                                     </Text>
                                     <Text style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>
-                                        info@genckalculator.com
+                                        {BRAND.email}
                                     </Text>
                                 </View>
                             </View>
@@ -129,7 +107,7 @@ export default function ContactScreen() {
 
                         {/* Satır 2: Twitter */}
                         <TouchableOpacity
-                            onPress={handleTwitter}
+                            onPress={() => openLink(BRAND.twitterUrl)}
                             activeOpacity={0.6}
                             style={{
                                 flexDirection: "row",
@@ -148,7 +126,7 @@ export default function ContactScreen() {
                                         Twitter
                                     </Text>
                                     <Text style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>
-                                        @genckalculator
+                                        {BRAND.twitterHandle}
                                     </Text>
                                 </View>
                             </View>
@@ -160,7 +138,7 @@ export default function ContactScreen() {
 
                         {/* Satır 3: Instagram */}
                         <TouchableOpacity
-                            onPress={handleInstagram}
+                            onPress={() => openLink(BRAND.instagramUrl)}
                             activeOpacity={0.6}
                             style={{
                                 flexDirection: "row",
@@ -179,7 +157,7 @@ export default function ContactScreen() {
                                         Instagram
                                     </Text>
                                     <Text style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>
-                                        @genckalcalculator
+                                        {BRAND.instagramHandle}
                                     </Text>
                                 </View>
                             </View>

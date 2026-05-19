@@ -29,7 +29,9 @@ export default function TargetSimulator({
     }
 
     const newBodyFat =
-        targetWeight > 0 ? ((targetWeight - leanMass) / targetWeight) * 100 : 0;
+        targetWeight > leanMass
+            ? Math.max(0, ((targetWeight - leanMass) / targetWeight) * 100)
+            : 0;
 
     return (
         <View className="w-full py-4 mb-6">

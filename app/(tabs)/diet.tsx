@@ -8,6 +8,21 @@ import Constants from "expo-constants";
 
 import { useFormContext } from "../../src/context/FormContext";
 import TDEECalculatorPanel from "../../src/components/TDEECalculatorPanel";
+import BrandLogo from "../../src/components/BrandLogo";
+import { generateLocalFallbackPlan, generateLocalSwapFood } from "../../src/services/localDietGenerator";
+import type { GeneratedPlan, FoodItem, FoodItemMacros } from "../../src/types/diet";
+import type { DiyetTipi } from "../../src/types";
+
+// API yanıtı için runtime type-guard
+function isValidDietResponse(data: unknown): data is Omit<GeneratedPlan, 'meals'> & {
+    meals: Array<{ title: string; items: Array<{ name: string; cal: number; fullText: string; macros?: FoodItemMacros }> }>;
+} {
+    if (!data || typeof data !== 'object') return false;
+    const d = data as Record<string, unknown>;
+    if (!Array.isArray(d.meals)) return false;
+    if (!d.macros || typeof d.macros !== 'object') return false;
+    return true;
+}
 
 // --- DİYET TİPİ SEÇENEKLERİ ---
 const dietTypeOptions = [
@@ -25,6 +40,10 @@ const getBaseUrl = () => {
     return `http://${ipAddress}:3000`;
 };
 
+// Benzersiz ID üretimi için monoton sayaç (2.7 - Date.now() çakışma koruması)
+let _idCounter = 0;
+const uniqueId = () => `${Date.now()}-${++_idCounter}`;
+
 export default function DietTab() {
     const { formData, setFizikselAlan, setDiyetAlan, calculatedTDEE } = useFormContext();
 
@@ -32,16 +51,32 @@ export default function DietTab() {
 
     // --- STATE ARŞİTEKTÜRÜ ---
     const [step, setStep] = useState<"select-plan" | "preferences" | "generating" | "result">("select-plan");
-    const [activePlan, setActivePlan] = useState<'Bulk' | 'Maintain' | 'Cut'>(
-        activeHedef === "kilo_al" ? "Bulk" : activeHedef === "kilo_ver" ? "Cut" : "Maintain"
-    );
+    
+    // 2.3: activePlan artık yerel state değil — context'teki activeHedef'ten reaktif olarak türetiliyor.
+    const activePlan: 'Bulk' | 'Maintain' | 'Cut' =
+        activeHedef === "kilo_al" ? "Bulk" : activeHedef === "kilo_ver" ? "Cut" : "Maintain";
     const [progress, setProgress] = useState(0);
 
-    // Diyet Planı tabına her tıklandığında veya sayfa odaklandığında her zaman ilk adıma sıfırla!
+    // --- FORM YEREL STATELERİ ---
+    const [mealsPerDay, setMealsPerDay] = useState<number>(3);
+    const [dietType, setDietType] = useState<string>("standart");
+    const [allergies, setAllergies] = useState<string>("");
+
+    // --- AI ÜRETİM STATELERİ ---
+    const [isLoadingPlan, setIsLoadingPlan] = useState(false);
+    const [isLocalSimulated, setIsLocalSimulated] = useState(false);
+    const [generatedPlan, setGeneratedPlan] = useState<GeneratedPlan | null>(null);
+
+    // --- SWAP YÜKLENİYOR STATELERİ ---
+    const [swappingFoodIds, setSwappingFoodIds] = useState<Record<string, boolean>>({});
+
+    // 2.1: Sadece henüz plan üretilmemişse sıfırla — üretilmiş planı sekmeler arası geçişte kaybetme!
     useFocusEffect(
         React.useCallback(() => {
-            setStep("select-plan");
-        }, [])
+            if (!generatedPlan) {
+                setStep("select-plan");
+            }
+        }, [generatedPlan])
     );
 
     const navigation = useNavigation();
@@ -93,31 +128,7 @@ export default function DietTab() {
         return () => subscription.remove();
     }, [step]);
 
-    // --- FORM YEREL STATELERİ ---
-    const [mealsPerDay, setMealsPerDay] = useState<number>(3);
-    const [dietType, setDietType] = useState<string>("standart");
-    const [allergies, setAllergies] = useState<string>("");
-
-    // --- AI ÜRETİM STATELERİ ---
-    const [isLoadingPlan, setIsLoadingPlan] = useState(false);
-    const [isLocalSimulated, setIsLocalSimulated] = useState(false);
-    const [generatedPlan, setGeneratedPlan] = useState<{
-        macros: { protein: number; fat: number; carb: number };
-        meals: Array<{
-            id: string;
-            title: string;
-            items: Array<{
-                id: string;
-                name: string;
-                cal: number;
-                fullText: string;
-                macros?: { protein: number; fat: number; carb: number };
-            }>;
-        }>;
-    } | null>(null);
-
-    // --- SWAP YÜKLENİYOR STATELERİ ---
-    const [swappingFoodIds, setSwappingFoodIds] = useState<Record<string, boolean>>({});
+    // Taşındı (üst satırlarda tanımlandı)
 
     // --- PRESET DİYET PLANLARI ---
     const plans = useMemo(() => [
@@ -147,230 +158,8 @@ export default function DietTab() {
         },
     ], [calculatedTDEE]);
 
-    // --- DETAYLI YEREL SİMÜLASYON VERİ ÜRETİCİSİ (FALLBACK PLAN GENERATOR) ---
-    const generateLocalFallbackPlan = (targetCalories: number, selectedDietType: string, selectedMealsPerDay: number) => {
-        let pPerc = 30;
-        let cPerc = 40;
-        let fPerc = 30;
-
-        if (selectedDietType === "karnivor") {
-            pPerc = 40; cPerc = 5; fPerc = 55;
-        } else if (selectedDietType === "keto") {
-            pPerc = 25; cPerc = 5; fPerc = 70;
-        } else if (selectedDietType === "vegan" || selectedDietType === "vejetaryen") {
-            pPerc = 25; cPerc = 50; fPerc = 25;
-        }
-
-        const proteinTotalGrams = Math.round((targetCalories * (pPerc / 100)) / 4);
-        const fatTotalGrams = Math.round((targetCalories * (fPerc / 100)) / 9);
-        const carbTotalGrams = Math.round((targetCalories * (cPerc / 100)) / 4);
-
-        const breakfastTemplates = {
-            standart: [
-                { name: "Haşlanmış Yumurta", fullText: "3 adet haşlanmış yumurta", cal: 210, macros: { protein: 18, fat: 15, carb: 1.5 } },
-                { name: "Yulaf Ezmesi", fullText: "60g yulaf ezmesi ve 200ml süt", cal: 320, macros: { protein: 12, fat: 8, carb: 48 } },
-                { name: "Lor Peyniri", fullText: "100g lor peyniri", cal: 110, macros: { protein: 13, fat: 2, carb: 3 } }
-            ],
-            karnivor: [
-                { name: "Tereyağlı Yumurta", fullText: "4 adet tereyağında yumurta", cal: 360, macros: { protein: 24, fat: 28, carb: 2 } },
-                { name: "Dana Kıyma", fullText: "150g sote dana kıyma", cal: 330, macros: { protein: 28, fat: 24, carb: 0 } }
-            ],
-            vejetaryen: [
-                { name: "Tofu Tava", fullText: "150g sote baharatlı tofu", cal: 180, macros: { protein: 16, fat: 11, carb: 4 } },
-                { name: "Haşlanmış Yumurta", fullText: "3 adet haşlanmış yumurta", cal: 210, macros: { protein: 18, fat: 15, carb: 1.5 } }
-            ],
-            vegan: [
-                { name: "Fıstık Ezmeli Yulaf", fullText: "60g yulaf ezmesi, 200ml soya sütü ve 1 yk fıstık ezmesi", cal: 390, macros: { protein: 18, fat: 15, carb: 52 } },
-                { name: "Muz", fullText: "1 adet orta boy muz", cal: 100, macros: { protein: 1.2, fat: 0.3, carb: 26 } }
-            ],
-            keto: [
-                { name: "Avokadolu Yumurta", fullText: "3 adet tereyağlı yumurta ve yarım avokado", cal: 390, macros: { protein: 19, fat: 34, carb: 8 } },
-                { name: "Süzme Peynir", fullText: "100g tam yağlı süzme peynir", cal: 210, macros: { protein: 11, fat: 18, carb: 2.5 } }
-            ]
-        };
-
-        const lunchTemplates = {
-            standart: [
-                { name: "Izgara Tavuk", fullText: "150g ızgara tavuk göğsü", cal: 250, macros: { protein: 46, fat: 4, carb: 0 } },
-                { name: "Basmati Pirinç", fullText: "150g haşlanmış basmati pirinç", cal: 210, macros: { protein: 4, fat: 0.5, carb: 46 } },
-                { name: "Mevsim Salatası", fullText: "Mevsim yeşillikleri salatası (1 tatlı kaşığı zeytinyağı ile)", cal: 70, macros: { protein: 1, fat: 5, carb: 6 } }
-            ],
-            karnivor: [
-                { name: "Dana Biftek", fullText: "250g ızgara dana biftek", cal: 520, macros: { protein: 55, fat: 34, carb: 0 } }
-            ],
-            vejetaryen: [
-                { name: "Mercimek Yemeği", fullText: "150g haşlanmış yeşil mercimek", cal: 230, macros: { protein: 18, fat: 2, carb: 35 } },
-                { name: "Kinoa Salatası", fullText: "100g haşlanmış kinoa ve yeşillik", cal: 140, macros: { protein: 5, fat: 2.5, carb: 24 } }
-            ],
-            vegan: [
-                { name: "Nohut Sote", fullText: "150g baharatlı sote nohut", cal: 240, macros: { protein: 13, fat: 4, carb: 38 } },
-                { name: "Basmati Pirinç", fullText: "150g haşlanmış basmati pirinç", cal: 210, macros: { protein: 4, fat: 0.5, carb: 46 } }
-            ],
-            keto: [
-                { name: "Fırın Somon", fullText: "200g fırınlanmış somon fileto", cal: 400, macros: { protein: 40, fat: 26, carb: 0 } },
-                { name: "Sarımsaklı Brokoli", fullText: "100g zeytinyağında sotelenmiş brokoli", cal: 110, macros: { protein: 3, fat: 10, carb: 6 } }
-            ]
-        };
-
-        const dinnerTemplates = {
-            standart: [
-                { name: "Izgara Bonfile", fullText: "150g ızgara dana bonfile", cal: 280, macros: { protein: 36, fat: 15, carb: 0 } },
-                { name: "Fırın Patates", fullText: "150g baharatlı fırın patates dilimleri", cal: 140, macros: { protein: 3, fat: 0.2, carb: 32 } },
-                { name: "Haşlanmış Brokoli", fullText: "100g haşlanmış brokoli", cal: 35, macros: { protein: 2.8, fat: 0.4, carb: 7 } }
-            ],
-            karnivor: [
-                { name: "Izgara Köfte", fullText: "200g ev yapımı ızgara köfte", cal: 420, macros: { protein: 36, fat: 30, carb: 0 } }
-            ],
-            vejetaryen: [
-                { name: "Sote Tofu", fullText: "150g ızgara marineli tofu", cal: 180, macros: { protein: 16, fat: 11, carb: 4 } },
-                { name: "Fırın Patates", fullText: "150g fırın patates", cal: 140, macros: { protein: 3, fat: 0.2, carb: 32 } }
-            ],
-            vegan: [
-                { name: "Kuru Fasulye", fullText: "150g zeytinyağlı kuru fasulye yemeği", cal: 250, macros: { protein: 14, fat: 5, carb: 38 } },
-                { name: "Siyez Bulguru", fullText: "100g haşlanmış siyez bulgur pilavı", cal: 130, macros: { protein: 4.5, fat: 1, carb: 27 } }
-            ],
-            keto: [
-                { name: "Izgara Bonfile", fullText: "200g tereyağlı bonfile", cal: 410, macros: { protein: 48, fat: 24, carb: 0 } },
-                { name: "Kuşkonmaz Sote", fullText: "100g zeytinyağlı ızgara kuşkonmaz", cal: 120, macros: { protein: 2, fat: 12, carb: 4 } }
-            ]
-        };
-
-        const snackTemplates = {
-            standart: [
-                { name: "Çiğ Badem", fullText: "25g çiğ badem (yaklaşık 15 adet)", cal: 150, macros: { protein: 5, fat: 13, carb: 5 } }
-            ],
-            karnivor: [
-                { name: "Eski Kaşar", fullText: "50g eski kaşar peyniri", cal: 200, macros: { protein: 14, fat: 16, carb: 0.5 } }
-            ],
-            vejetaryen: [
-                { name: "Çiğ Ceviz", fullText: "30g çiğ ceviz içi", cal: 190, macros: { protein: 4.5, fat: 19, carb: 4 } }
-            ],
-            vegan: [
-                { name: "Çiğ Fındık", fullText: "30g çiğ fındık", cal: 180, macros: { protein: 4, fat: 18, carb: 5 } }
-            ],
-            keto: [
-                { name: "Çiğ Badem", fullText: "30g çiğ badem", cal: 180, macros: { protein: 6, fat: 16, carb: 6 } }
-            ]
-        };
-
-        const key = (selectedDietType in breakfastTemplates ? selectedDietType : "standart") as keyof typeof breakfastTemplates;
-
-        const rawMeals = [];
-        if (selectedMealsPerDay === 2) {
-            rawMeals.push({ title: "İlk Öğün (Kahvaltı)", items: breakfastTemplates[key] });
-            rawMeals.push({ title: "İkinci Öğün (Akşam Yemeği)", items: dinnerTemplates[key] });
-        } else if (selectedMealsPerDay === 3) {
-            rawMeals.push({ title: "Kahvaltı", items: breakfastTemplates[key] });
-            rawMeals.push({ title: "Öğle Yemeği", items: lunchTemplates[key] });
-            rawMeals.push({ title: "Akşam Yemeği", items: dinnerTemplates[key] });
-        } else if (selectedMealsPerDay === 4) {
-            rawMeals.push({ title: "Kahvaltı", items: breakfastTemplates[key] });
-            rawMeals.push({ title: "Öğle Yemeği", items: lunchTemplates[key] });
-            rawMeals.push({ title: "Akşam Yemeği", items: dinnerTemplates[key] });
-            rawMeals.push({ title: "Ara Öğün", items: snackTemplates[key] });
-        } else {
-            rawMeals.push({ title: "Kahvaltı", items: breakfastTemplates[key] });
-            rawMeals.push({ title: "Öğle Yemeği", items: lunchTemplates[key] });
-            rawMeals.push({ title: "Akşam Yemeği", items: dinnerTemplates[key] });
-            rawMeals.push({ title: "Ara Öğün 1", items: snackTemplates[key] });
-            rawMeals.push({ title: "Ara Öğün 2", items: snackTemplates[key] });
-        }
-
-        const totalOriginalCal = rawMeals.reduce((sum, m) => sum + m.items.reduce((s, i) => s + i.cal, 0), 0);
-        const scale = targetCalories / totalOriginalCal;
-
-        let finalP = 0, finalY = 0, finalK = 0;
-
-        const meals = rawMeals.map((m, mIdx) => ({
-            id: `meal-${mIdx}-${Date.now()}`,
-            title: m.title,
-            items: m.items.map((it, itIdx) => {
-                const cal = Math.round(it.cal * scale);
-                const protein = Math.round(it.macros.protein * scale);
-                const fat = Math.round(it.macros.fat * scale);
-                const carb = Math.round(it.macros.carb * scale);
-
-                finalP += protein;
-                finalY += fat;
-                finalK += carb;
-
-                let fullText = it.fullText;
-                const match = it.fullText.match(/^(\d+)(g|ml| adet)?/);
-                if (match) {
-                    const originalQty = parseInt(match[1], 10);
-                    const newQty = Math.round(originalQty * scale);
-                    fullText = it.fullText.replace(/^(\d+)/, String(newQty));
-                }
-
-                return {
-                    id: `food-${mIdx}-${itIdx}-${Date.now()}`,
-                    name: it.name,
-                    cal,
-                    fullText,
-                    macros: { protein, fat, carb }
-                };
-            })
-        }));
-
-        return {
-            macros: { protein: finalP, fat: finalY, carb: finalK },
-            meals
-        };
-    };
-
-    // --- SWAP LOCAL FALLBACK GENERATOR ---
-    const generateLocalSwapFood = (mealTitle: string, selectedDietType: string, currentFood: any) => {
-        const foodAlternatives = {
-            standart: [
-                { name: "Hindi Sote", fullText: "130g baharatlı sote hindi göğsü", cal: currentFood.cal, macros: { protein: Math.round(currentFood.macros.protein * 1.05), fat: Math.max(1, Math.round(currentFood.macros.fat * 0.8)), carb: 0 } },
-                { name: "Tofu Tava", fullText: "140g baharatlı sote tofu", cal: currentFood.cal, macros: { protein: Math.round(currentFood.macros.protein * 0.8), fat: Math.round(currentFood.macros.fat * 1.1), carb: Math.round(currentFood.macros.carb * 1.1) } },
-                { name: "Dana Füme", fullText: "80g yağsız dana füme eti", cal: currentFood.cal, macros: { protein: currentFood.macros.protein, fat: currentFood.macros.fat, carb: currentFood.macros.carb } },
-                { name: "Tavuk Sote", fullText: "130g sebzeli tavuk sote", cal: currentFood.cal, macros: { protein: Math.round(currentFood.macros.protein * 1.02), fat: currentFood.macros.fat, carb: Math.round(currentFood.macros.carb * 0.9) } },
-                { name: "Izgara Levrek", fullText: "150g fırın levrek fileto", cal: currentFood.cal, macros: { protein: Math.round(currentFood.macros.protein * 0.95), fat: Math.round(currentFood.macros.fat * 1.05), carb: 0 } }
-            ],
-            karnivor: [
-                { name: "Kuzu Külbastı", fullText: "150g ızgara kuzu külbastı", cal: currentFood.cal, macros: { protein: currentFood.macros.protein, fat: currentFood.macros.fat, carb: 0 } },
-                { name: "Somon Izgara", fullText: "160g ızgara somon fileto", cal: currentFood.cal, macros: { protein: Math.round(currentFood.macros.protein * 0.9), fat: Math.round(currentFood.macros.fat * 1.1), carb: 0 } },
-                { name: "Dana Antrikot", fullText: "180g ızgara dana antrikot", cal: currentFood.cal, macros: { protein: Math.round(currentFood.macros.protein * 1.05), fat: Math.round(currentFood.macros.fat * 0.95), carb: 0 } },
-                { name: "Dana Köfte", fullText: "150g ev yapımı dana kıyma köfte", cal: currentFood.cal, macros: { protein: currentFood.macros.protein, fat: currentFood.macros.fat, carb: 0 } }
-            ],
-            vejetaryen: [
-                { name: "Izgara Tofu", fullText: "140g marineli ızgara tofu", cal: currentFood.cal, macros: { protein: Math.round(currentFood.macros.protein * 0.95), fat: Math.round(currentFood.macros.fat * 1.05), carb: currentFood.macros.carb } },
-                { name: "Kinoa Haşlama", fullText: "100g haşlanmış kinoa", cal: currentFood.cal, macros: { protein: Math.round(currentFood.macros.protein * 0.85), fat: currentFood.macros.fat, carb: Math.round(currentFood.macros.carb * 1.15) } },
-                { name: "Sote Mercimek", fullText: "120g haşlanmış yeşil mercimek sote", cal: currentFood.cal, macros: { protein: currentFood.macros.protein, fat: currentFood.macros.fat, carb: currentFood.macros.carb } },
-                { name: "Mantarlı Nohut", fullText: "130g mantarlı nohut sote", cal: currentFood.cal, macros: { protein: Math.round(currentFood.macros.protein * 0.9), fat: currentFood.macros.fat, carb: Math.round(currentFood.macros.carb * 1.1) } }
-            ],
-            vegan: [
-                { name: "Nohut Haşlama", fullText: "130g haşlanmış nohut", cal: currentFood.cal, macros: { protein: currentFood.macros.protein, fat: currentFood.macros.fat, carb: currentFood.macros.carb } },
-                { name: "Mercimek Sote", fullText: "120g haşlanmış sote yeşil mercimek", cal: currentFood.cal, macros: { protein: Math.round(currentFood.macros.protein * 1.05), fat: Math.round(currentFood.macros.fat * 0.95), carb: currentFood.macros.carb } },
-                { name: "Tofu Dilimleri", fullText: "120g baharatlı fırınlanmış tofu", cal: currentFood.cal, macros: { protein: Math.round(currentFood.macros.protein * 0.9), fat: Math.round(currentFood.macros.fat * 1.1), carb: Math.round(currentFood.macros.carb * 0.8) } },
-                { name: "Soya Kıyması", fullText: "110g sote edilmiş soya kıyması", cal: currentFood.cal, macros: { protein: Math.round(currentFood.macros.protein * 1.1), fat: currentFood.macros.fat, carb: currentFood.macros.carb } }
-            ],
-            keto: [
-                { name: "Tereyağlı Yumurta", fullText: "2 adet yumurta (1 yk tereyağı ile)", cal: currentFood.cal, macros: { protein: Math.round(currentFood.macros.protein * 0.95), fat: Math.round(currentFood.macros.fat * 1.05), carb: 1 } },
-                { name: "Çiğ Ceviz içi", fullText: "30g çiğ ceviz", cal: currentFood.cal, macros: { protein: Math.round(currentFood.macros.protein * 0.8), fat: Math.round(currentFood.macros.fat * 1.2), carb: Math.round(currentFood.macros.carb * 0.9) } },
-                { name: "Avokadolu Somon", fullText: "120g fırın somon ve yarım avokado", cal: currentFood.cal, macros: { protein: Math.round(currentFood.macros.protein * 0.95), fat: Math.round(currentFood.macros.fat * 1.05), carb: 2 } },
-                { name: "Kaşar Peyniri", fullText: "60g eski kaşar peyniri dilimleri", cal: currentFood.cal, macros: { protein: currentFood.macros.protein, fat: currentFood.macros.fat, carb: 1 } }
-            ]
-        };
-
-        const key = (selectedDietType in foodAlternatives ? selectedDietType : "standart") as keyof typeof foodAlternatives;
-        const list = foodAlternatives[key];
-        
-        // Aktif besinin ismini hariç tutarak HER SEFERİNDE kesinlikle farklı bir alternatif seçilmesini garanti altına alalım!
-        const filteredList = list.filter(item => item.name.toLowerCase() !== currentFood.name.toLowerCase());
-        const activeList = filteredList.length > 0 ? filteredList : list;
-        
-        const randomAlternative = activeList[Math.floor(Math.random() * activeList.length)];
-
-        return {
-            id: `food-swapped-${Date.now()}`,
-            name: randomAlternative.name,
-            cal: currentFood.cal,
-            fullText: randomAlternative.fullText,
-            macros: randomAlternative.macros
-        };
-    };
+    // generateLocalFallbackPlan ve generateLocalSwapFood artık
+    // src/services/localDietGenerator.ts'den import ediliyor (3.9)
 
     // --- AI PLAN OLUŞTURMA İŞLEYİCİSİ (GENERATE PLAN HANDLER) ---
     const handleGeneratePlan = async () => {
@@ -381,6 +170,11 @@ export default function DietTab() {
         const targetCalories = activePlan === 'Bulk' ? calculatedTDEE + 500 : activePlan === 'Cut' ? calculatedTDEE - 500 : calculatedTDEE;
 
         try {
+            // 2.2: Diyet verilerini context'e yaz (FormContext ile senkronizasyon)
+            setDiyetAlan("ogunSayisi", mealsPerDay);
+            setDiyetAlan("diyetTipi", dietType as DiyetTipi);
+            setDiyetAlan("alerjenler", allergies.trim() ? [allergies.trim()] : []);
+
             const baseUrl = getBaseUrl();
             const response = await fetch(`${baseUrl}/api/generate-diet`, {
                 method: "POST",
@@ -397,16 +191,21 @@ export default function DietTab() {
                 throw new Error("Sunucu hatası");
             }
 
-            const data = await response.json();
+            const rawData: unknown = await response.json();
 
-            const planWithIds = {
-                ...data,
-                meals: data.meals.map((meal: any, mIdx: number) => ({
+            if (!isValidDietResponse(rawData)) {
+                throw new Error("API'den geçersiz yanıt formatı alındı");
+            }
+
+            // 2.7: API yanıtı item ID'leri de monoton sayaç ile üretilsin
+            const planWithIds: GeneratedPlan = {
+                ...rawData,
+                meals: rawData.meals.map((meal, mIdx) => ({
                     ...meal,
-                    id: `meal-${mIdx}-${Date.now()}`,
-                    items: meal.items.map((item: any, itIdx: number) => ({
+                    id: `meal-${mIdx}-${uniqueId()}`,
+                    items: meal.items.map((item, itIdx) => ({
                         ...item,
-                        id: `food-${mIdx}-${itIdx}-${Date.now()}`,
+                        id: `food-${mIdx}-${itIdx}-${uniqueId()}`,
                     })),
                 })),
             };
@@ -416,6 +215,7 @@ export default function DietTab() {
             setTimeout(() => {
                 setGeneratedPlan(planWithIds);
                 setStep("result");
+                setIsLoadingPlan(false);
             }, 600);
         } catch (error) {
             // Sunucu çevrimdışıysa yerel simülasyon fallback'ini devreye al!
@@ -425,9 +225,8 @@ export default function DietTab() {
                 setGeneratedPlan(fallbackData);
                 setIsLocalSimulated(true);
                 setStep("result");
+                setIsLoadingPlan(false);
             }, 600);
-        } finally {
-            setIsLoadingPlan(false);
         }
     };
 
@@ -465,10 +264,14 @@ export default function DietTab() {
                 throw new Error("Swap hatası");
             }
 
-            const newFood = await response.json();
-            const newFoodWithId = {
-                ...newFood,
-                id: `food-swapped-${Date.now()}`
+            const rawSwapFood: unknown = await response.json();
+            // Temel yapı doğrulaması
+            if (!rawSwapFood || typeof rawSwapFood !== 'object' || !('name' in rawSwapFood) || !('cal' in rawSwapFood)) {
+                throw new Error("Swap API geçersiz yanıt döndürdü");
+            }
+            const newFoodWithId: FoodItem = {
+                ...(rawSwapFood as Omit<FoodItem, 'id'>),
+                id: `food-swapped-${uniqueId()}`
             };
 
             setGeneratedPlan(prev => {
@@ -485,8 +288,9 @@ export default function DietTab() {
                 };
             });
         } catch (err) {
-            // Sunucu çevrimdışıysa yerel olarak mükemmel dengeli besin üret!
-            const localNewFood = generateLocalSwapFood(targetMeal.title, dietType, targetFood);
+            // macros yoksa local swap'ı güvenli şekilde çalıştır
+            const safeMacros = targetFood.macros ?? { protein: 0, fat: 0, carb: 0 };
+            const localNewFood = generateLocalSwapFood(targetMeal.title, dietType, { ...targetFood, macros: safeMacros });
             setGeneratedPlan(prev => {
                 if (!prev) return prev;
                 return {
@@ -566,17 +370,8 @@ export default function DietTab() {
             <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
                 <Tabs.Screen options={{ headerShown: false }} />
 
-                {/* Marka Logo Başlığı */}
-                <View style={styles.brandHeader}>
-                    <View style={styles.brandLogoRow}>
-                        <View style={styles.brandSignalBars}>
-                            <View style={[styles.signalBar, { height: 12 }]} />
-                            <View style={[styles.signalBar, { height: 20 }]} />
-                            <View style={[styles.signalBar, { height: 12 }]} />
-                        </View>
-                        <Text style={styles.brandTitle}>genckalculator</Text>
-                    </View>
-                </View>
+                {/* 3.5: BrandLogo bileşeni */}
+                <BrandLogo />
 
                 <View style={styles.fullScreenLoader}>
                     <Text style={styles.loadingTitle}>Diyet Planı Hazırlanıyor</Text>
@@ -605,17 +400,8 @@ export default function DietTab() {
                 contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 }}
                 keyboardShouldPersistTaps="handled"
             >
-                {/* Marka Logo Başlığı (Hesaplayıcı sayfasıyla birebir aynı konum ve stilde, sayfa ile kaydırılabilir) */}
-                <View style={[styles.brandHeader, { paddingVertical: 0, paddingBottom: 16 }]}>
-                    <View style={styles.brandLogoRow}>
-                        <View style={styles.brandSignalBars}>
-                            <View style={[styles.signalBar, { height: 12 }]} />
-                            <View style={[styles.signalBar, { height: 20 }]} />
-                            <View style={[styles.signalBar, { height: 12 }]} />
-                        </View>
-                        <Text style={styles.brandTitle}>genckalculator</Text>
-                    </View>
-                </View>
+                {/* 3.5: BrandLogo bileşeni */}
+                <BrandLogo />
                 {/* ================= STEP 1: SELECT PLAN ================= */}
                 {step === "select-plan" && (
                     <View>
@@ -651,7 +437,7 @@ export default function DietTab() {
                                         ]}
                                         activeOpacity={0.9}
                                         onPress={() => {
-                                            setActivePlan(plan.id);
+                                            // 2.3: setActivePlan kaldırıldı — context üzerinden reaktif güncelleme
                                             let actualTarget: "kilo_al" | "kilo_koruma" | "kilo_ver" = "kilo_koruma";
                                             if (plan.id === "Bulk") actualTarget = "kilo_al";
                                             else if (plan.id === "Cut") actualTarget = "kilo_ver";
@@ -675,7 +461,7 @@ export default function DietTab() {
                                             style={[styles.ctaButton, isActive ? { backgroundColor: plan.iconColor } : { borderColor: plan.iconColor, borderWidth: 1.5 }]}
                                             activeOpacity={0.85}
                                             onPress={() => {
-                                                setActivePlan(plan.id);
+                                                // 2.3: setActivePlan kaldırıldı — context üzerinden reaktif güncelleme
                                                 let actualTarget: "kilo_al" | "kilo_koruma" | "kilo_ver" = "kilo_koruma";
                                                 if (plan.id === "Bulk") actualTarget = "kilo_al";
                                                 else if (plan.id === "Cut") actualTarget = "kilo_ver";

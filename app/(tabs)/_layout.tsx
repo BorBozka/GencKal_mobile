@@ -1,12 +1,12 @@
 import React from "react";
-import { Platform, StyleSheet, Text, View } from "react-native";
+import { Platform, Text, View } from "react-native";
 import { Tabs } from "expo-router";
 import * as Haptics from "expo-haptics";
-import { BlurView } from "expo-blur";
+// expo-blur kaldırıldı — kullanılmıyor (3.4)
 import { Calculator, UtensilsCrossed, Settings } from "lucide-react-native";
 
 export default function TabsLayout() {
-    const isDark = false;
+    // isDark kaldırıldı — dead code (3.4)
 
     return (
         <Tabs

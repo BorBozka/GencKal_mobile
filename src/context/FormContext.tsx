@@ -1,85 +1,110 @@
 // src/context/FormContext.tsx
-// Shared state between Calculator and Diet tabs
+// 3.3: İki ayrı iç context — fiziksel ve diyet verileri birbirinden bağımsız re-render üretmez
 import React, { createContext, useContext, useState, useCallback, useMemo } from "react";
-import type { KullaniciProfil, Cinsiyet, AktiviteSeviyesi, Hedef } from "../types";
+import type { KullaniciProfil, Cinsiyet, AktiviteSeviyesi, Hedef, FizikselVeriler, DiyetVerileri } from "../types";
 import { calculateTDEE } from "../utils/calculations";
 
-interface FormContextValue {
-    formData: KullaniciProfil;
-    setFizikselAlan: <K extends keyof KullaniciProfil["fizikselVeriler"]>(
-        name: K,
-        value: KullaniciProfil["fizikselVeriler"][K]
-    ) => void;
-    setDiyetAlan: <K extends keyof KullaniciProfil["diyetVerileri"]>(
-        name: K,
-        value: KullaniciProfil["diyetVerileri"][K]
-    ) => void;
+// --- Fiziksel Context ---
+interface FizikselContextValue {
+    fizikselVeriler: FizikselVeriler;
+    setFizikselAlan: <K extends keyof FizikselVeriler>(name: K, value: FizikselVeriler[K]) => void;
     calculatedTDEE: number;
 }
 
-const FormContext = createContext<FormContextValue | null>(null);
+// --- Diyet Context ---
+interface DiyetContextValue {
+    diyetVerileri: DiyetVerileri;
+    setDiyetAlan: <K extends keyof DiyetVerileri>(name: K, value: DiyetVerileri[K]) => void;
+}
+
+const FizikselContext = createContext<FizikselContextValue | null>(null);
+const DiyetContext = createContext<DiyetContextValue | null>(null);
+
+const DEFAULT_FIZIKSEL: FizikselVeriler = {
+    boy: 175,
+    kilo: 75,
+    yas: 25,
+    cinsiyet: "erkek" as Cinsiyet,
+    yagOrani: 15,
+    aktiviteSeviyesi: "hareketsiz (ofis işi)" as AktiviteSeviyesi,
+    agirlikCalisiyorMu: false,
+};
+
+const DEFAULT_DIYET: DiyetVerileri = {
+    diyetTipi: "standart",
+    ogunSayisi: 3,
+    alerjenler: [],
+    kullanilanTakviyeler: [],
+    hedef: "kilo_koruma" as Hedef,
+};
 
 export function FormProvider({ children }: { children: React.ReactNode }) {
-    const [formData, setFormData] = useState<KullaniciProfil>({
-        fizikselVeriler: {
-            boy: 175,
-            kilo: 75,
-            yas: 25,
-            cinsiyet: "erkek" as Cinsiyet,
-            yagOrani: 15,
-            aktiviteSeviyesi: "hareketsiz (ofis işi)" as AktiviteSeviyesi,
-            agirlikCalisiyorMu: false,
-        },
-        diyetVerileri: {
-            diyetTipi: "standart",
-            ogunSayisi: 3,
-            alerjenler: [],
-            kullanilanTakviyeler: [],
-            hedef: "kilo_koruma" as Hedef,
-        },
-    });
+    const [fizikselVeriler, setFizikselVerilerState] = useState<FizikselVeriler>(DEFAULT_FIZIKSEL);
+    const [diyetVerileri, setDiyetVerileriState] = useState<DiyetVerileri>(DEFAULT_DIYET);
 
-    const setFizikselAlan = useCallback(<K extends keyof KullaniciProfil["fizikselVeriler"]>(
+    const setFizikselAlan = useCallback(<K extends keyof FizikselVeriler>(
         name: K,
-        value: KullaniciProfil["fizikselVeriler"][K]
+        value: FizikselVeriler[K]
     ) => {
-        setFormData(prev => ({
-            ...prev,
-            fizikselVeriler: { ...prev.fizikselVeriler, [name]: value }
-        }));
+        setFizikselVerilerState(prev => ({ ...prev, [name]: value }));
     }, []);
 
-    const setDiyetAlan = useCallback(<K extends keyof KullaniciProfil["diyetVerileri"]>(
+    const setDiyetAlan = useCallback(<K extends keyof DiyetVerileri>(
         name: K,
-        value: KullaniciProfil["diyetVerileri"][K]
+        value: DiyetVerileri[K]
     ) => {
-        setFormData(prev => ({
-            ...prev,
-            diyetVerileri: { ...prev.diyetVerileri, [name]: value }
-        }));
+        setDiyetVerileriState(prev => ({ ...prev, [name]: value }));
     }, []);
 
     const calculatedTDEE = useMemo(
-        () => calculateTDEE(formData.fizikselVeriler),
-        [formData.fizikselVeriler]
+        () => calculateTDEE(fizikselVeriler),
+        [fizikselVeriler]
     );
 
-    const value = useMemo(() => ({
-        formData,
-        setFizikselAlan,
-        setDiyetAlan,
-        calculatedTDEE,
-    }), [formData, setFizikselAlan, setDiyetAlan, calculatedTDEE]);
+    const fizikselValue = useMemo<FizikselContextValue>(
+        () => ({ fizikselVeriler, setFizikselAlan, calculatedTDEE }),
+        [fizikselVeriler, setFizikselAlan, calculatedTDEE]
+    );
+
+    const diyetValue = useMemo<DiyetContextValue>(
+        () => ({ diyetVerileri, setDiyetAlan }),
+        [diyetVerileri, setDiyetAlan]
+    );
 
     return (
-        <FormContext.Provider value={value}>
-            {children}
-        </FormContext.Provider>
+        <FizikselContext.Provider value={fizikselValue}>
+            <DiyetContext.Provider value={diyetValue}>
+                {children}
+            </DiyetContext.Provider>
+        </FizikselContext.Provider>
     );
 }
 
-export function useFormContext() {
-    const ctx = useContext(FormContext);
-    if (!ctx) throw new Error("useFormContext must be used within FormProvider");
+// --- Odaklanmış hook'lar (yeni API) ---
+export function useFizikselContext(): FizikselContextValue {
+    const ctx = useContext(FizikselContext);
+    if (!ctx) throw new Error("useFizikselContext must be used within FormProvider");
     return ctx;
+}
+
+export function useDiyetContext(): DiyetContextValue {
+    const ctx = useContext(DiyetContext);
+    if (!ctx) throw new Error("useDiyetContext must be used within FormProvider");
+    return ctx;
+}
+
+// --- Geriye dönük uyumlu birleşik hook (mevcut tüketiciler için) ---
+export function useFormContext() {
+    const fiziksel = useFizikselContext();
+    const diyet = useDiyetContext();
+
+    return useMemo(() => ({
+        formData: {
+            fizikselVeriler: fiziksel.fizikselVeriler,
+            diyetVerileri: diyet.diyetVerileri,
+        } satisfies KullaniciProfil,
+        setFizikselAlan: fiziksel.setFizikselAlan,
+        setDiyetAlan: diyet.setDiyetAlan,
+        calculatedTDEE: fiziksel.calculatedTDEE,
+    }), [fiziksel, diyet]);
 }
