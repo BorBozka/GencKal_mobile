@@ -2,6 +2,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "../context/ThemeContext";
 
 export interface SegmentedOption<T> {
     value: T;
@@ -14,8 +15,6 @@ interface SegmentedControlProps<T> {
     selectedValue: T;
     onValueChange: (value: T) => void;
     containerStyle?: object;
-    activeColor?: string;
-    inactiveColor?: string;
 }
 
 export default function SegmentedControl<T>({
@@ -23,11 +22,15 @@ export default function SegmentedControl<T>({
     selectedValue,
     onValueChange,
     containerStyle,
-    activeColor = "#4338ca", // Brand Indigo-700
-    inactiveColor = "#64748b", // Slate-500
 }: SegmentedControlProps<T>) {
+    const { isDark, colors } = useTheme();
+    const activeColor = isDark ? colors.primaryDark : colors.primary; // Dynamic active theme color
+    const inactiveColor = isDark ? "#94a3b8" : "#64748b"; // slate-400 / slate-500
+    const activeBg = isDark ? "#1e293b" : "#ffffff"; // slate-800 / white
+    const containerBg = isDark ? "#0f172a" : "#f1f5f9"; // slate-900 / slate-100
+
     return (
-        <View style={[styles.container, containerStyle]}>
+        <View style={[styles.container, { backgroundColor: containerBg }, containerStyle]}>
             {options.map((option) => {
                 const isActive = selectedValue === option.value;
                 return (
@@ -37,7 +40,7 @@ export default function SegmentedControl<T>({
                         activeOpacity={0.85}
                         style={[
                             styles.button,
-                            isActive && styles.activeButton,
+                            isActive && { backgroundColor: activeBg, ...styles.activeShadow },
                         ]}
                     >
                         {option.icon && (
@@ -68,7 +71,6 @@ export default function SegmentedControl<T>({
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: "#f1f5f9", // bg-slate-100
         padding: 4,
         flexDirection: "row",
         borderRadius: 16,
@@ -82,13 +84,12 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         backgroundColor: "transparent",
     },
-    activeButton: {
-        backgroundColor: "#ffffff",
+    activeShadow: {
         ...Platform.select({
             ios: {
                 shadowColor: "#000000",
                 shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.08,
+                shadowOpacity: 0.15,
                 shadowRadius: 2,
             },
             android: {

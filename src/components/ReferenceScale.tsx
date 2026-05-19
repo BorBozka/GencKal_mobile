@@ -3,6 +3,7 @@
 import React, { useMemo } from "react";
 import { View, Text, useWindowDimensions } from "react-native";
 import Svg, { Polygon } from "react-native-svg";
+import { useTheme } from "../context/ThemeContext";
 import type { Cinsiyet } from "../types";
 
 interface ReferenceScaleProps {
@@ -39,6 +40,7 @@ const BAR_HEIGHT = 14;
 const GAP = 3;
 
 export default function ReferenceScale({ score, type }: ReferenceScaleProps) {
+    const { isDark } = useTheme();
     const { width: SCREEN_WIDTH } = useWindowDimensions();
     const segments = type === "BMI" ? BMI_SEGMENTS : FFMI_SEGMENTS;
     const scaleMin = segments[0].min;
@@ -64,8 +66,8 @@ export default function ReferenceScale({ score, type }: ReferenceScaleProps) {
                 <Svg width={14} height={12} viewBox="0 0 14 12">
                     <Polygon
                         points="1,1 13,1 7,11"
-                        fill="#64748b"
-                        stroke="#64748b"
+                        fill={isDark ? "#94a3b8" : "#64748b"}
+                        stroke={isDark ? "#94a3b8" : "#64748b"}
                         strokeWidth="1"
                         strokeLinejoin="round"
                     />
@@ -136,7 +138,7 @@ export default function ReferenceScale({ score, type }: ReferenceScaleProps) {
                         className="items-center"
                     >
                         <Text 
-                            className="text-[9px] leading-tight tracking-tighter text-slate-700 font-semibold text-center"
+                            className="text-[9px] leading-tight tracking-tighter text-slate-700 dark:text-slate-300 font-semibold text-center"
                         >
                             {seg.label}
                         </Text>

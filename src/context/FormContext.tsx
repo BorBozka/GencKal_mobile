@@ -2,6 +2,7 @@
 // 3.3: İki ayrı iç context — fiziksel ve diyet verileri birbirinden bağımsız re-render üretmez
 import React, { createContext, useContext, useState, useCallback, useMemo } from "react";
 import type { KullaniciProfil, Cinsiyet, AktiviteSeviyesi, Hedef, FizikselVeriler, DiyetVerileri } from "../types";
+import type { GeneratedPlan } from "../types/diet";
 import { calculateTDEE } from "../utils/calculations";
 
 // --- Fiziksel Context ---
@@ -15,6 +16,10 @@ interface FizikselContextValue {
 interface DiyetContextValue {
     diyetVerileri: DiyetVerileri;
     setDiyetAlan: <K extends keyof DiyetVerileri>(name: K, value: DiyetVerileri[K]) => void;
+    generatedPlan: GeneratedPlan | null;
+    setGeneratedPlan: React.Dispatch<React.SetStateAction<GeneratedPlan | null>>;
+    dietStep: "select-plan" | "preferences" | "generating" | "result";
+    setDietStep: React.Dispatch<React.SetStateAction<"select-plan" | "preferences" | "generating" | "result">>;
 }
 
 const FizikselContext = createContext<FizikselContextValue | null>(null);
@@ -41,6 +46,8 @@ const DEFAULT_DIYET: DiyetVerileri = {
 export function FormProvider({ children }: { children: React.ReactNode }) {
     const [fizikselVeriler, setFizikselVerilerState] = useState<FizikselVeriler>(DEFAULT_FIZIKSEL);
     const [diyetVerileri, setDiyetVerileriState] = useState<DiyetVerileri>(DEFAULT_DIYET);
+    const [generatedPlan, setGeneratedPlan] = useState<GeneratedPlan | null>(null);
+    const [dietStep, setDietStep] = useState<"select-plan" | "preferences" | "generating" | "result">("select-plan");
 
     const setFizikselAlan = useCallback(<K extends keyof FizikselVeriler>(
         name: K,
@@ -67,8 +74,8 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
     );
 
     const diyetValue = useMemo<DiyetContextValue>(
-        () => ({ diyetVerileri, setDiyetAlan }),
-        [diyetVerileri, setDiyetAlan]
+        () => ({ diyetVerileri, setDiyetAlan, generatedPlan, setGeneratedPlan, dietStep, setDietStep }),
+        [diyetVerileri, setDiyetAlan, generatedPlan, dietStep]
     );
 
     return (
@@ -106,5 +113,9 @@ export function useFormContext() {
         setFizikselAlan: fiziksel.setFizikselAlan,
         setDiyetAlan: diyet.setDiyetAlan,
         calculatedTDEE: fiziksel.calculatedTDEE,
+        generatedPlan: diyet.generatedPlan,
+        setGeneratedPlan: diyet.setGeneratedPlan,
+        dietStep: diyet.dietStep,
+        setDietStep: diyet.setDietStep,
     }), [fiziksel, diyet]);
 }

@@ -6,6 +6,39 @@ import type { GeneratedPlan, FoodItem, FoodItemMacros } from "../types/diet";
 let _idCounter = 0;
 const uid = () => `${Date.now()}-${++_idCounter}`;
 
+// Helper to check if a food is allergic
+const isAllergic = (foodName: string, fullText: string, allergies: string[]) => {
+    return allergies.some(allergy => {
+        const lowerAllergy = allergy.toLowerCase().trim();
+        if (!lowerAllergy) return false;
+        
+        const lowerName = foodName.toLowerCase();
+        const lowerText = fullText.toLowerCase();
+        
+        if (lowerName.includes(lowerAllergy) || lowerText.includes(lowerAllergy)) {
+            return true;
+        }
+        
+        // Custom keyword mapping for common Turkish allergy cases
+        if (lowerAllergy === "yumurta" && (lowerName.includes("egg") || lowerText.includes("egg"))) return true;
+        if (["süt", "laktoz", "peynir", "yoğurt", "tereyağ"].some(k => lowerAllergy.includes(k)) && 
+            ["süt", "peynir", "yoğurt", "tereyağ", "lor", "kaşar", "butter", "cheese", "milk", "lactose"].some(k => lowerName.includes(k) || lowerText.includes(k))) return true;
+        if (["fındık", "fıstık", "badem", "ceviz", "kuruyemiş"].some(k => lowerAllergy.includes(k)) && 
+            ["fındık", "fıstık", "badem", "ceviz", "nut", "almond", "walnut", "hazelnut", "peanut"].some(k => lowerName.includes(k) || lowerText.includes(k))) return true;
+        if (["gluten", "buğday", "un"].some(k => lowerAllergy.includes(k)) && 
+            ["yulaf", "un", "ekmek", "makarna", "bulgur", "siyez", "wheat", "gluten", "oat"].some(k => lowerName.includes(k) || lowerText.includes(k))) return true;
+            
+        return false;
+    });
+};
+
+const safeFallbacks = [
+    { name: "Yeşil Zeytin", fullText: "50g yeşil zeytin", cal: 70, macros: { protein: 0.5, fat: 7, carb: 2 } },
+    { name: "Salatalık ve Domates", fullText: "Salatalık, domates ve yeşillik tabağı (1 yk zeytinyağı ile)", cal: 110, macros: { protein: 1.5, fat: 10, carb: 5 } },
+    { name: "Avokado Dilimleri", fullText: "100g avokado dilimleri", cal: 160, macros: { protein: 2, fat: 15, carb: 9 } },
+    { name: "Pirinç Patlağı", fullText: "4 adet sade pirinç patlağı", cal: 120, macros: { protein: 2.5, fat: 0.5, carb: 26 } },
+];
+
 // ---- Şablon veritabanı ----
 const breakfastTemplates = {
     standart: [
@@ -124,7 +157,8 @@ const swapAlternatives = {
 export function generateLocalFallbackPlan(
     targetCalories: number,
     selectedDietType: string,
-    selectedMealsPerDay: number
+    selectedMealsPerDay: number,
+    allergies: string[] = []
 ): GeneratedPlan {
     let pPerc = 30, cPerc = 40, fPerc = 30;
     if (selectedDietType === "karnivor") { pPerc = 40; cPerc = 5; fPerc = 55; }
@@ -133,25 +167,35 @@ export function generateLocalFallbackPlan(
 
     const key = (selectedDietType in breakfastTemplates ? selectedDietType : "standart") as keyof typeof breakfastTemplates;
 
+    const filterAllergicItems = (items: typeof breakfastTemplates["standart"]) => {
+        const filtered = items.filter(it => !isAllergic(it.name, it.fullText, allergies));
+        if (filtered.length > 0) return filtered;
+        
+        const safe = safeFallbacks.filter(it => !isAllergic(it.name, it.fullText, allergies));
+        if (safe.length > 0) return [safe[Math.floor(Math.random() * safe.length)]];
+        
+        return [{ name: "Alerji Dostu Alternatif", fullText: "1 adet alerji dostu alternatif besin", cal: 100, macros: { protein: 2, fat: 5, carb: 12 } }];
+    };
+
     const rawMeals: { title: string; items: typeof breakfastTemplates["standart"] }[] = [];
     if (selectedMealsPerDay === 2) {
-        rawMeals.push({ title: "İlk Öğün (Kahvaltı)", items: breakfastTemplates[key] });
-        rawMeals.push({ title: "İkinci Öğün (Akşam Yemeği)", items: dinnerTemplates[key] });
+        rawMeals.push({ title: "İlk Öğün (Kahvaltı)", items: filterAllergicItems(breakfastTemplates[key]) });
+        rawMeals.push({ title: "İkinci Öğün (Akşam Yemeği)", items: filterAllergicItems(dinnerTemplates[key]) });
     } else if (selectedMealsPerDay === 3) {
-        rawMeals.push({ title: "Kahvaltı", items: breakfastTemplates[key] });
-        rawMeals.push({ title: "Öğle Yemeği", items: lunchTemplates[key] });
-        rawMeals.push({ title: "Akşam Yemeği", items: dinnerTemplates[key] });
+        rawMeals.push({ title: "Kahvaltı", items: filterAllergicItems(breakfastTemplates[key]) });
+        rawMeals.push({ title: "Öğle Yemeği", items: filterAllergicItems(lunchTemplates[key]) });
+        rawMeals.push({ title: "Akşam Yemeği", items: filterAllergicItems(dinnerTemplates[key]) });
     } else if (selectedMealsPerDay === 4) {
-        rawMeals.push({ title: "Kahvaltı", items: breakfastTemplates[key] });
-        rawMeals.push({ title: "Öğle Yemeği", items: lunchTemplates[key] });
-        rawMeals.push({ title: "Akşam Yemeği", items: dinnerTemplates[key] });
-        rawMeals.push({ title: "Ara Öğün", items: snackTemplates[key] });
+        rawMeals.push({ title: "Kahvaltı", items: filterAllergicItems(breakfastTemplates[key]) });
+        rawMeals.push({ title: "Öğle Yemeği", items: filterAllergicItems(lunchTemplates[key]) });
+        rawMeals.push({ title: "Akşam Yemeği", items: filterAllergicItems(dinnerTemplates[key]) });
+        rawMeals.push({ title: "Ara Öğün", items: filterAllergicItems(snackTemplates[key]) });
     } else {
-        rawMeals.push({ title: "Kahvaltı", items: breakfastTemplates[key] });
-        rawMeals.push({ title: "Öğle Yemeği", items: lunchTemplates[key] });
-        rawMeals.push({ title: "Akşam Yemeği", items: dinnerTemplates[key] });
-        rawMeals.push({ title: "Ara Öğün 1", items: snackTemplates[key] });
-        rawMeals.push({ title: "Ara Öğün 2", items: snackTemplates[key] });
+        rawMeals.push({ title: "Kahvaltı", items: filterAllergicItems(breakfastTemplates[key]) });
+        rawMeals.push({ title: "Öğle Yemeği", items: filterAllergicItems(lunchTemplates[key]) });
+        rawMeals.push({ title: "Akşam Yemeği", items: filterAllergicItems(dinnerTemplates[key]) });
+        rawMeals.push({ title: "Ara Öğün 1", items: filterAllergicItems(snackTemplates[key]) });
+        rawMeals.push({ title: "Ara Öğün 2", items: filterAllergicItems(snackTemplates[key]) });
     }
 
     const totalOriginalCal = rawMeals.reduce((sum, m) => sum + m.items.reduce((s, i) => s + i.cal, 0), 0);
@@ -185,13 +229,23 @@ export function generateLocalFallbackPlan(
 export function generateLocalSwapFood(
     _mealTitle: string,
     selectedDietType: string,
-    currentFood: FoodItem & { macros: FoodItemMacros }
+    currentFood: FoodItem & { macros: FoodItemMacros },
+    allergies: string[] = []
 ): FoodItem {
     const key = (selectedDietType in swapAlternatives ? selectedDietType : "standart") as keyof typeof swapAlternatives;
     const list = swapAlternatives[key];
-    const filtered = list.filter(item => item.name.toLowerCase() !== currentFood.name.toLowerCase());
-    const source = filtered.length > 0 ? filtered : list;
-    const pick = source[Math.floor(Math.random() * source.length)];
+    
+    let filtered = list.filter(item => !isAllergic(item.name, item.fullText, allergies));
+    filtered = filtered.filter(item => item.name.toLowerCase() !== currentFood.name.toLowerCase());
+    
+    let pick;
+    if (filtered.length > 0) {
+        pick = filtered[Math.floor(Math.random() * filtered.length)];
+    } else {
+        const safe = safeFallbacks.filter(it => !isAllergic(it.name, it.fullText, allergies));
+        pick = safe.length > 0 ? safe[Math.floor(Math.random() * safe.length)] : { name: "Alerji Dostu Alternatif", fullText: "1 adet Alerji Dostu Alternatif" };
+    }
+    
     return {
         id: `food-swapped-${uid()}`,
         name: pick.name,

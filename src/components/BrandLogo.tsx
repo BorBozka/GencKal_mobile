@@ -2,32 +2,46 @@
 import React from "react";
 import { View, Text } from "react-native";
 
+import { useTheme } from "../context/ThemeContext";
+
 interface BrandLogoProps {
     /** "center" (default) veya "left" hizalama */
     align?: "center" | "left";
     style?: object;
+    /** Logoyu büyük boyutta göstermek için */
+    large?: boolean;
 }
 
-export default function BrandLogo({ align = "center", style }: BrandLogoProps) {
+export default function BrandLogo({ align = "center", style, large = false }: BrandLogoProps) {
+    const { isDark, colors } = useTheme();
+    const brandColor = isDark ? colors.primaryDark : colors.primary;
+
+    const barWidth = large ? 7 : 4;
+    const sideBarHeight = large ? 24 : 12;
+    const centerBarHeight = large ? 40 : 20;
+    const barGap = large ? 4 : 2;
+    const logoFontSize = large ? 32 : 18;
+    const contentGap = large ? 12 : 8;
+
     return (
         <View
             style={[
                 {
                     alignItems: align === "left" ? "flex-start" : "center",
-                    paddingBottom: 16,
+                    paddingBottom: large ? 24 : 16,
                 },
                 style,
             ]}
         >
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: contentGap }}>
                 {/* Signal bars */}
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
-                    <View style={{ width: 4, height: 12, borderRadius: 2, backgroundColor: "#4338ca" }} />
-                    <View style={{ width: 4, height: 20, borderRadius: 2, backgroundColor: "#4338ca" }} />
-                    <View style={{ width: 4, height: 12, borderRadius: 2, backgroundColor: "#4338ca" }} />
+                <View style={{ flexDirection: "row", alignItems: "center", gap: barGap }}>
+                    <View style={{ width: barWidth, height: sideBarHeight, borderRadius: barWidth / 2, backgroundColor: brandColor }} />
+                    <View style={{ width: barWidth, height: centerBarHeight, borderRadius: barWidth / 2, backgroundColor: brandColor }} />
+                    <View style={{ width: barWidth, height: sideBarHeight, borderRadius: barWidth / 2, backgroundColor: brandColor }} />
                 </View>
-                <Text style={{ fontSize: 18, fontWeight: "700", color: "#4338ca", letterSpacing: -0.3 }}>
-                    genckalculator
+                <Text style={{ fontSize: logoFontSize, fontWeight: "800", color: brandColor, letterSpacing: large ? -0.8 : -0.3 }}>
+                    GencKalculator
                 </Text>
             </View>
         </View>
