@@ -22,6 +22,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "usesCleartextTraffic": true,
       "edgeToEdgeEnabled": false,
       "predictiveBackGestureEnabled": false,
       "userInterfaceStyle": "automatic"
@@ -31,7 +32,7 @@
       "bundler": "metro"
     },
     "extra": {
-      "apiPort": 3000
+      "apiBaseUrl": "http://10.95.197.116:3000"
     },
     "plugins": [
       "expo-router",

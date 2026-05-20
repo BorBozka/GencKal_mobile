@@ -21,7 +21,6 @@ type ApiDietResponse = Omit<GeneratedPlan, 'meals'> & {
 
 type ExpoApiConfig = {
     apiBaseUrl?: unknown;
-    apiPort?: unknown;
 };
 
 type DietPlanId = 'Bulk' | 'Maintain' | 'Cut';
@@ -83,20 +82,15 @@ const mealOptions: SegmentedOption<number>[] = [
     { value: 5, label: "5 Öğün" },
 ];
 
-// --- API KONFİGÜRASYONU VE DİNAMİK GELİŞTİRİCİ SUNUCU IP ÇÖZÜMLEMESİ ---
-const getBaseUrl = () => {
+// --- API KONFİGÜRASYONU ---
+const getConfiguredApiBaseUrl = () => {
     const extra = Constants.expoConfig?.extra as ExpoApiConfig | undefined;
     const configuredBaseUrl = typeof extra?.apiBaseUrl === "string" ? extra.apiBaseUrl.trim() : "";
     if (configuredBaseUrl) {
         return configuredBaseUrl.replace(/\/$/, "");
     }
 
-    const debuggerHost = Constants.expoConfig?.hostUri || "";
-    const ipAddress = debuggerHost.split(":")[0] || "localhost";
-    const configuredPort = typeof extra?.apiPort === "number" && Number.isFinite(extra.apiPort)
-        ? extra.apiPort
-        : 3000;
-    return `http://${ipAddress}:${configuredPort}`;
+    return null;
 };
 
 // Benzersiz ID üretimi için monoton sayaç (2.7 - Date.now() çakışma koruması)
@@ -387,7 +381,7 @@ export default function DietTab() {
         const targetCalories = Math.max(MIN_TARGET_CALORIES, rawTargetCalories);
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 12000); // 12-second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 125000); // Backend can wait up to 120s for AI generation.
 
         try {
             // 2.2: Diyet verilerini context'e yaz (FormContext ile senkronizasyon)
@@ -395,7 +389,11 @@ export default function DietTab() {
             setDiyetAlan("diyetTipi", dietType);
             setDiyetAlan("alerjenler", allergyList);
 
-            const baseUrl = getBaseUrl();
+            const baseUrl = getConfiguredApiBaseUrl();
+            if (!baseUrl) {
+                throw new Error("API base URL yapılandırılmadı");
+            }
+
             const response = await fetch(`${baseUrl}/api/generate-diet`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -488,10 +486,14 @@ export default function DietTab() {
         }, 150);
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 35000); // Backend can wait up to 30s for a swap.
 
         try {
-            const baseUrl = getBaseUrl();
+            const baseUrl = getConfiguredApiBaseUrl();
+            if (!baseUrl) {
+                throw new Error("API base URL yapılandırılmadı");
+            }
+
             const response = await fetch(`${baseUrl}/api/swap-food`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
