@@ -6,6 +6,13 @@ import type { GeneratedPlan, FoodItem, FoodItemMacros } from "../types/diet";
 let _idCounter = 0;
 const uid = () => `${Date.now()}-${++_idCounter}`;
 
+type TemplateFood = {
+    name: string;
+    fullText: string;
+    cal: number;
+    macros: FoodItemMacros;
+};
+
 // Helper to check if a food is allergic
 const isAllergic = (foodName: string, fullText: string, allergies: string[]) => {
     return allergies.some(allergy => {
@@ -120,35 +127,35 @@ const snackTemplates = {
 
 const swapAlternatives = {
     standart: [
-        { name: "Hindi Sote", fullText: "130g baharatlı sote hindi göğsü" },
-        { name: "Tofu Tava", fullText: "140g baharatlı sote tofu" },
-        { name: "Dana Füme", fullText: "80g yağsız dana füme eti" },
-        { name: "Tavuk Sote", fullText: "130g sebzeli tavuk sote" },
-        { name: "Izgara Levrek", fullText: "150g fırın levrek fileto" },
+        { name: "Hindi Sote", fullText: "130g baharatlı sote hindi göğsü", cal: 210, macros: { protein: 38, fat: 4, carb: 2 } },
+        { name: "Tofu Tava", fullText: "140g baharatlı sote tofu", cal: 170, macros: { protein: 15, fat: 10, carb: 5 } },
+        { name: "Dana Füme", fullText: "80g yağsız dana füme eti", cal: 150, macros: { protein: 24, fat: 5, carb: 1 } },
+        { name: "Tavuk Sote", fullText: "130g sebzeli tavuk sote", cal: 230, macros: { protein: 36, fat: 7, carb: 5 } },
+        { name: "Izgara Levrek", fullText: "150g fırın levrek fileto", cal: 190, macros: { protein: 32, fat: 6, carb: 0 } },
     ],
     karnivor: [
-        { name: "Kuzu Külbastı", fullText: "150g ızgara kuzu külbastı" },
-        { name: "Somon Izgara", fullText: "160g ızgara somon fileto" },
-        { name: "Dana Antrikot", fullText: "180g ızgara dana antrikot" },
-        { name: "Dana Köfte", fullText: "150g ev yapımı dana kıyma köfte" },
+        { name: "Kuzu Külbastı", fullText: "150g ızgara kuzu külbastı", cal: 360, macros: { protein: 34, fat: 24, carb: 0 } },
+        { name: "Somon Izgara", fullText: "160g ızgara somon fileto", cal: 320, macros: { protein: 34, fat: 20, carb: 0 } },
+        { name: "Dana Antrikot", fullText: "180g ızgara dana antrikot", cal: 430, macros: { protein: 42, fat: 28, carb: 0 } },
+        { name: "Dana Köfte", fullText: "150g ev yapımı dana kıyma köfte", cal: 315, macros: { protein: 28, fat: 22, carb: 1 } },
     ],
     vejetaryen: [
-        { name: "Izgara Tofu", fullText: "140g marineli ızgara tofu" },
-        { name: "Kinoa Haşlama", fullText: "100g haşlanmış kinoa" },
-        { name: "Sote Mercimek", fullText: "120g haşlanmış yeşil mercimek sote" },
-        { name: "Mantarlı Nohut", fullText: "130g mantarlı nohut sote" },
+        { name: "Izgara Tofu", fullText: "140g marineli ızgara tofu", cal: 170, macros: { protein: 15, fat: 10, carb: 5 } },
+        { name: "Kinoa Haşlama", fullText: "100g haşlanmış kinoa", cal: 120, macros: { protein: 4, fat: 2, carb: 21 } },
+        { name: "Sote Mercimek", fullText: "120g haşlanmış yeşil mercimek sote", cal: 185, macros: { protein: 14, fat: 4, carb: 25 } },
+        { name: "Mantarlı Nohut", fullText: "130g mantarlı nohut sote", cal: 220, macros: { protein: 11, fat: 6, carb: 31 } },
     ],
     vegan: [
-        { name: "Nohut Haşlama", fullText: "130g haşlanmış nohut" },
-        { name: "Mercimek Sote", fullText: "120g haşlanmış sote yeşil mercimek" },
-        { name: "Tofu Dilimleri", fullText: "120g baharatlı fırınlanmış tofu" },
-        { name: "Soya Kıyması", fullText: "110g sote edilmiş soya kıyması" },
+        { name: "Nohut Haşlama", fullText: "130g haşlanmış nohut", cal: 215, macros: { protein: 11, fat: 4, carb: 35 } },
+        { name: "Mercimek Sote", fullText: "120g haşlanmış sote yeşil mercimek", cal: 185, macros: { protein: 14, fat: 4, carb: 25 } },
+        { name: "Tofu Dilimleri", fullText: "120g baharatlı fırınlanmış tofu", cal: 145, macros: { protein: 13, fat: 8, carb: 4 } },
+        { name: "Soya Kıyması", fullText: "110g sote edilmiş soya kıyması", cal: 210, macros: { protein: 24, fat: 7, carb: 13 } },
     ],
     keto: [
-        { name: "Tereyağlı Yumurta", fullText: "2 adet yumurta (1 yk tereyağı ile)" },
-        { name: "Çiğ Ceviz içi", fullText: "30g çiğ ceviz" },
-        { name: "Avokadolu Somon", fullText: "120g fırın somon ve yarım avokado" },
-        { name: "Kaşar Peyniri", fullText: "60g eski kaşar peyniri dilimleri" },
+        { name: "Tereyağlı Yumurta", fullText: "2 adet yumurta (1 yk tereyağı ile)", cal: 245, macros: { protein: 12, fat: 21, carb: 1 } },
+        { name: "Çiğ Ceviz içi", fullText: "30g çiğ ceviz", cal: 195, macros: { protein: 5, fat: 20, carb: 4 } },
+        { name: "Avokadolu Somon", fullText: "120g fırın somon ve yarım avokado", cal: 340, macros: { protein: 26, fat: 25, carb: 7 } },
+        { name: "Kaşar Peyniri", fullText: "60g eski kaşar peyniri dilimleri", cal: 240, macros: { protein: 15, fat: 20, carb: 1 } },
     ],
 };
 
@@ -198,8 +205,27 @@ export function generateLocalFallbackPlan(
         rawMeals.push({ title: "Ara Öğün 2", items: filterAllergicItems(snackTemplates[key]) });
     }
 
+    const safeTargetCalories = Math.max(1, targetCalories);
     const totalOriginalCal = rawMeals.reduce((sum, m) => sum + m.items.reduce((s, i) => s + i.cal, 0), 0);
-    const scale = totalOriginalCal > 0 ? targetCalories / totalOriginalCal : 1;
+    const scale = totalOriginalCal > 0 ? safeTargetCalories / totalOriginalCal : 1;
+    const scaledMacroTotals = rawMeals.reduce((totals, m) => {
+        m.items.forEach((it) => {
+            totals.protein += it.macros.protein * scale;
+            totals.fat += it.macros.fat * scale;
+            totals.carb += it.macros.carb * scale;
+        });
+        return totals;
+    }, { protein: 0, fat: 0, carb: 0 });
+    const targetMacros = {
+        protein: Math.round((safeTargetCalories * (pPerc / 100)) / 4),
+        fat: Math.round((safeTargetCalories * (fPerc / 100)) / 9),
+        carb: Math.round((safeTargetCalories * (cPerc / 100)) / 4),
+    };
+    const macroScale = {
+        protein: scaledMacroTotals.protein > 0 ? targetMacros.protein / scaledMacroTotals.protein : 1,
+        fat: scaledMacroTotals.fat > 0 ? targetMacros.fat / scaledMacroTotals.fat : 1,
+        carb: scaledMacroTotals.carb > 0 ? targetMacros.carb / scaledMacroTotals.carb : 1,
+    };
 
     let finalP = 0, finalY = 0, finalK = 0;
 
@@ -208,9 +234,9 @@ export function generateLocalFallbackPlan(
         title: m.title,
         items: m.items.map((it, itIdx) => {
             const cal = Math.round(it.cal * scale);
-            const protein = Math.round(it.macros.protein * scale);
-            const fat = Math.round(it.macros.fat * scale);
-            const carb = Math.round(it.macros.carb * scale);
+            const protein = Math.round(it.macros.protein * scale * macroScale.protein);
+            const fat = Math.round(it.macros.fat * scale * macroScale.fat);
+            const carb = Math.round(it.macros.carb * scale * macroScale.carb);
             finalP += protein; finalY += fat; finalK += carb;
 
             let fullText = it.fullText;
@@ -238,19 +264,21 @@ export function generateLocalSwapFood(
     let filtered = list.filter(item => !isAllergic(item.name, item.fullText, allergies));
     filtered = filtered.filter(item => item.name.toLowerCase() !== currentFood.name.toLowerCase());
     
-    let pick;
+    let pick: TemplateFood;
     if (filtered.length > 0) {
         pick = filtered[Math.floor(Math.random() * filtered.length)];
     } else {
         const safe = safeFallbacks.filter(it => !isAllergic(it.name, it.fullText, allergies));
-        pick = safe.length > 0 ? safe[Math.floor(Math.random() * safe.length)] : { name: "Alerji Dostu Alternatif", fullText: "1 adet Alerji Dostu Alternatif" };
+        pick = safe.length > 0
+            ? safe[Math.floor(Math.random() * safe.length)]
+            : { name: "Alerji Dostu Alternatif", fullText: "1 adet Alerji Dostu Alternatif", cal: 100, macros: { protein: 2, fat: 5, carb: 12 } };
     }
     
     return {
         id: `food-swapped-${uid()}`,
         name: pick.name,
-        cal: currentFood.cal,
+        cal: pick.cal,
         fullText: pick.fullText,
-        macros: currentFood.macros,
+        macros: pick.macros,
     };
 }

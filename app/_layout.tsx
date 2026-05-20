@@ -1,8 +1,11 @@
 // app/_layout.tsx
 import "../global.css";
 import React from "react";
-import { Platform } from "react-native";
 import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+
+// Prevent the splash screen from auto-hiding before asset loading is complete.
+SplashScreen.preventAutoHideAsync().catch(() => {});
 import { SafeAreaProvider, initialWindowMetrics } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { ThemeProvider as NavigationThemeProvider, DarkTheme, DefaultTheme } from "@react-navigation/native";
@@ -35,8 +38,18 @@ function AppContent() {
         });
     }, [isDark]);
 
+    React.useEffect(() => {
+        const timer = setTimeout(async () => {
+            await SplashScreen.hideAsync().catch((err) => {
+                console.warn("SplashScreen hide error: ", err);
+            });
+        }, 1500);
+
+        return () => clearTimeout(timer);
+    }, []);
+
     return (
-        <SafeAreaProvider initialWindowMetrics={initialWindowMetrics}>
+        <SafeAreaProvider initialMetrics={initialWindowMetrics}>
             <StatusBar style={isDark ? "light" : "dark"} translucent={true} backgroundColor="transparent" hidden={false} />
             <NavigationThemeProvider value={isDark ? CustomDarkTheme : CustomDefaultTheme}>
                 <Stack

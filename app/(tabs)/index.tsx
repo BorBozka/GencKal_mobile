@@ -1,5 +1,5 @@
 import React, { useMemo, useRef } from "react";
-import { View, ScrollView, Text } from "react-native";
+import { View, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Tabs } from "expo-router";
 
@@ -17,7 +17,7 @@ export default function CalculatorTab() {
     const { fizikselVeriler, setFizikselAlan } = useFizikselContext();
     const { boy, kilo, yagOrani } = fizikselVeriler;
     const scrollViewRef = useRef<ScrollView>(null);
-    const { isDark, colors } = useTheme();
+    const { isDark } = useTheme();
 
     const calculatedBMI = useMemo(() => calculateBMI(boy, kilo), [boy, kilo]);
     const { leanMass, ffmi: rawFFMI, normalizedFfmi: calculatedFFMI } = useMemo(
@@ -78,7 +78,6 @@ export default function CalculatorTab() {
                             <TargetSimulator
                                 currentWeight={kilo}
                                 leanMass={leanMass}
-                                currentBodyFat={yagOrani}
                                 onToggle={(isOpen) => {
                                     if (isOpen) {
                                         setTimeout(() => {
@@ -92,25 +91,5 @@ export default function CalculatorTab() {
                 </ScrollView>
             </SafeAreaView>
         </View>
-    );
-}
-
-/** Küçük bölüm başlığı chip'i */
-function SectionLabel({ label }: { label: string }) {
-    const { isDark } = useTheme();
-    return (
-        <Text
-            style={{
-                fontSize: 10,
-                fontWeight: "800",
-                color: isDark ? "#475569" : "#94a3b8",
-                letterSpacing: 2,
-                textTransform: "uppercase",
-                marginBottom: 10,
-                marginTop: 4,
-            }}
-        >
-            {label}
-        </Text>
     );
 }

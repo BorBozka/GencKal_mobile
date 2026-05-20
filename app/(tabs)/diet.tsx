@@ -1,13 +1,13 @@
 // app/(tabs)/diet.tsx
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, StyleSheet, BackHandler, KeyboardAvoidingView, Platform, Keyboard, DeviceEventEmitter } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, BackHandler, KeyboardAvoidingView, Platform, Keyboard, DeviceEventEmitter } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { Tabs, useFocusEffect, useNavigation } from "expo-router";
 import Constants from "expo-constants";
 import * as Haptics from "expo-haptics";
 import { useFormContext } from "../../src/context/FormContext";
-import { useTheme } from "../../src/context/ThemeContext";
+import { ThemeColors, useTheme } from "../../src/context/ThemeContext";
 import TDEECalculatorPanel from "../../src/components/TDEECalculatorPanel";
 import BrandLogo from "../../src/components/BrandLogo";
 import SegmentedControl, { SegmentedOption } from "../../src/components/SegmentedControl";
@@ -15,15 +15,55 @@ import { generateLocalFallbackPlan, generateLocalSwapFood } from "../../src/serv
 import type { GeneratedPlan, FoodItem, FoodItemMacros } from "../../src/types/diet";
 import type { DiyetTipi } from "../../src/types";
 
-// API yanıtı için runtime type-guard
-function isValidDietResponse(data: unknown): data is Omit<GeneratedPlan, 'meals'> & {
+type ApiDietResponse = Omit<GeneratedPlan, 'meals'> & {
     meals: Array<{ title: string; items: Array<{ name: string; cal: number; fullText: string; macros?: FoodItemMacros }> }>;
-} {
+};
+
+type ExpoApiConfig = {
+    apiBaseUrl?: unknown;
+    apiPort?: unknown;
+};
+
+type DietPlanId = 'Bulk' | 'Maintain' | 'Cut';
+
+type PlanOption = {
+    id: DietPlanId;
+    name: string;
+    calories: number;
+    iconName: keyof typeof Feather.glyphMap;
+    iconColor: string;
+    macros: FoodItemMacros;
+};
+
+const isMacroObject = (value: unknown): value is FoodItemMacros => {
+    if (!value || typeof value !== 'object') return false;
+    const macros = value as Record<string, unknown>;
+    return typeof macros.protein === 'number'
+        && typeof macros.fat === 'number'
+        && typeof macros.carb === 'number';
+};
+
+// API yanıtı için runtime type-guard
+function isValidDietResponse(data: unknown): data is ApiDietResponse {
     if (!data || typeof data !== 'object') return false;
     const d = data as Record<string, unknown>;
     if (!Array.isArray(d.meals)) return false;
-    if (!d.macros || typeof d.macros !== 'object') return false;
-    return true;
+    if (!isMacroObject(d.macros)) return false;
+    return d.meals.every((meal) => {
+        if (!meal || typeof meal !== 'object') return false;
+        const m = meal as Record<string, unknown>;
+        if (typeof m.title !== 'string' || !Array.isArray(m.items)) return false;
+
+        return m.items.every((item) => {
+            if (!item || typeof item !== 'object') return false;
+            const food = item as Record<string, unknown>;
+            const hasRequiredFields = typeof food.name === 'string'
+                && typeof food.cal === 'number'
+                && typeof food.fullText === 'string';
+            if (!hasRequiredFields) return false;
+            return food.macros === undefined || isMacroObject(food.macros);
+        });
+    });
 }
 
 // --- DİYET TİPİ SEÇENEKLERİ ---
@@ -43,11 +83,20 @@ const mealOptions: SegmentedOption<number>[] = [
     { value: 5, label: "5 Öğün" },
 ];
 
-// --- DİNAMİK GELİŞTİRİCİ SUNUCU IP ÇÖZÜMLEMESİ ---
+// --- API KONFİGÜRASYONU VE DİNAMİK GELİŞTİRİCİ SUNUCU IP ÇÖZÜMLEMESİ ---
 const getBaseUrl = () => {
+    const extra = Constants.expoConfig?.extra as ExpoApiConfig | undefined;
+    const configuredBaseUrl = typeof extra?.apiBaseUrl === "string" ? extra.apiBaseUrl.trim() : "";
+    if (configuredBaseUrl) {
+        return configuredBaseUrl.replace(/\/$/, "");
+    }
+
     const debuggerHost = Constants.expoConfig?.hostUri || "";
     const ipAddress = debuggerHost.split(":")[0] || "localhost";
-    return `http://${ipAddress}:3000`;
+    const configuredPort = typeof extra?.apiPort === "number" && Number.isFinite(extra.apiPort)
+        ? extra.apiPort
+        : 3000;
+    return `http://${ipAddress}:${configuredPort}`;
 };
 
 // Benzersiz ID üretimi için monoton sayaç (2.7 - Date.now() çakışma koruması)
@@ -72,6 +121,52 @@ const getSwapMessage = (progressVal: number) => {
     if (progressVal < 80) return "Alerjenler filtreleniyor...";
     if (progressVal < 93) return "Yeni alternatif yazılıyor...";
     return "Son kontroller yapılıyor...";
+};
+
+const MIN_TARGET_CALORIES = 800;
+
+const getRawTargetCalories = (tdee: number, plan: DietPlanId) => {
+    if (plan === 'Bulk') return tdee + 500;
+    if (plan === 'Cut') return tdee - 500;
+    return tdee;
+};
+
+const getDisplayTargetCalories = (tdee: number, plan: DietPlanId) => (
+    Math.max(MIN_TARGET_CALORIES, getRawTargetCalories(tdee, plan))
+);
+
+const recalculatePlanMacros = (plan: GeneratedPlan): FoodItemMacros => (
+    plan.meals.reduce<FoodItemMacros>((totals, meal) => {
+        meal.items.forEach((item) => {
+            totals.protein += item.macros?.protein ?? 0;
+            totals.fat += item.macros?.fat ?? 0;
+            totals.carb += item.macros?.carb ?? 0;
+        });
+        return totals;
+    }, { protein: 0, fat: 0, carb: 0 })
+);
+
+const replaceFoodInPlan = (
+    plan: GeneratedPlan,
+    mealId: string,
+    foodId: string,
+    newFood: FoodItem
+): GeneratedPlan => {
+    const nextPlan = {
+        ...plan,
+        meals: plan.meals.map(meal => {
+            if (meal.id !== mealId) return meal;
+            return {
+                ...meal,
+                items: meal.items.map(item => item.id === foodId ? newFood : item)
+            };
+        })
+    };
+
+    return {
+        ...nextPlan,
+        macros: recalculatePlanMacros(nextPlan),
+    };
 };
 
 export default function DietTab() {
@@ -109,13 +204,13 @@ export default function DietTab() {
     // --- STATE ARŞİTEKTÜRÜ ---
 
     // 2.3: activePlan artık yerel state değil — context'teki activeHedef'ten reaktif olarak türetiliyor.
-    const activePlan: 'Bulk' | 'Maintain' | 'Cut' =
+    const activePlan: DietPlanId =
         activeHedef === "kilo_al" ? "Bulk" : activeHedef === "kilo_ver" ? "Cut" : "Maintain";
     const [progress, setProgress] = useState(0);
 
     // --- FORM YEREL STATELERİ ---
     const [mealsPerDay, setMealsPerDay] = useState<number>(3);
-    const [dietType, setDietType] = useState<string>("standart");
+    const [dietType, setDietType] = useState<DiyetTipi>("standart");
     const [allergyInput, setAllergyInput] = useState<string>("");
     const [allergyList, setAllergyList] = useState<string[]>(formData.diyetVerileri.alerjenler || []);
     const [selectedPlanId, setSelectedPlanId] = useState<'Bulk' | 'Maintain' | 'Cut' | null>(null);
@@ -123,7 +218,6 @@ export default function DietTab() {
     const [messageIndex, setMessageIndex] = useState(0);
 
     // --- AI ÜRETİM STATELERİ ---
-    const [isLoadingPlan, setIsLoadingPlan] = useState(false);
     const [isLocalSimulated, setIsLocalSimulated] = useState(false);
 
     // --- SWAP YÜKLENİYOR STATELERİ ---
@@ -236,11 +330,11 @@ export default function DietTab() {
     // Taşındı (üst satırlarda tanımlandı)
 
     // --- PRESET DİYET PLANLARI ---
-    const plans = useMemo(() => [
+    const plans = useMemo<PlanOption[]>(() => [
         {
             id: "Bulk" as const,
             name: "Kilo Al (Bulk)",
-            calories: calculatedTDEE + 500,
+            calories: getDisplayTargetCalories(calculatedTDEE, "Bulk"),
             iconName: "trending-up",
             iconColor: isDark ? "#60a5fa" : "#2563eb",
             macros: { protein: 25, carb: 50, fat: 25 }
@@ -248,7 +342,7 @@ export default function DietTab() {
         {
             id: "Maintain" as const,
             name: "Kilo Koru (Maintain)",
-            calories: calculatedTDEE,
+            calories: getDisplayTargetCalories(calculatedTDEE, "Maintain"),
             iconName: "target",
             iconColor: "#059669", // Emerald Green
             macros: { protein: 30, carb: 40, fat: 30 }
@@ -256,7 +350,7 @@ export default function DietTab() {
         {
             id: "Cut" as const,
             name: "Kilo Ver (Cut)",
-            calories: calculatedTDEE - 500,
+            calories: getDisplayTargetCalories(calculatedTDEE, "Cut"),
             iconName: "trending-down",
             iconColor: "#dc2626", // Crimson Red
             macros: { protein: 35, carb: 35, fat: 30 }
@@ -284,11 +378,13 @@ export default function DietTab() {
 
     // --- AI PLAN OLUŞTURMA İŞLEYİCİSİ (GENERATE PLAN HANDLER) ---
     const handleGeneratePlan = async () => {
+        const rawTargetCalories = getRawTargetCalories(calculatedTDEE, activePlan);
+        if (rawTargetCalories < MIN_TARGET_CALORIES) return;
+
         setStep("generating");
-        setIsLoadingPlan(true);
         setIsLocalSimulated(false);
 
-        const targetCalories = activePlan === 'Bulk' ? calculatedTDEE + 500 : activePlan === 'Cut' ? calculatedTDEE - 500 : calculatedTDEE;
+        const targetCalories = Math.max(MIN_TARGET_CALORIES, rawTargetCalories);
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 12000); // 12-second timeout
@@ -296,7 +392,7 @@ export default function DietTab() {
         try {
             // 2.2: Diyet verilerini context'e yaz (FormContext ile senkronizasyon)
             setDiyetAlan("ogunSayisi", mealsPerDay);
-            setDiyetAlan("diyetTipi", dietType as DiyetTipi);
+            setDiyetAlan("diyetTipi", dietType);
             setDiyetAlan("alerjenler", allergyList);
 
             const baseUrl = getBaseUrl();
@@ -341,7 +437,6 @@ export default function DietTab() {
             setTimeout(() => {
                 setGeneratedPlan(planWithIds);
                 setStep("result");
-                setIsLoadingPlan(false);
             }, 600);
         } catch (error) {
             clearTimeout(timeoutId);
@@ -352,7 +447,6 @@ export default function DietTab() {
                 setGeneratedPlan(fallbackData);
                 setIsLocalSimulated(true);
                 setStep("result");
-                setIsLoadingPlan(false);
             }, 600);
         }
     };
@@ -436,16 +530,7 @@ export default function DietTab() {
             setTimeout(() => {
                 setGeneratedPlan(prev => {
                     if (!prev) return prev;
-                    return {
-                        ...prev,
-                        meals: prev.meals.map(meal => {
-                            if (meal.id !== mealId) return meal;
-                            return {
-                                ...meal,
-                                items: meal.items.map(item => item.id === foodId ? newFoodWithId : item)
-                            };
-                        })
-                    };
+                    return replaceFoodInPlan(prev, mealId, foodId, newFoodWithId);
                 });
                 setSwappingFoodIds(prev => ({ ...prev, [foodId]: false }));
             }, 300);
@@ -461,16 +546,7 @@ export default function DietTab() {
             setTimeout(() => {
                 setGeneratedPlan(prev => {
                     if (!prev) return prev;
-                    return {
-                        ...prev,
-                        meals: prev.meals.map(meal => {
-                            if (meal.id !== mealId) return meal;
-                            return {
-                                ...meal,
-                                items: meal.items.map(item => item.id === foodId ? localNewFood : item)
-                            };
-                        })
-                    };
+                    return replaceFoodInPlan(prev, mealId, foodId, localNewFood);
                 });
                 setSwappingFoodIds(prev => ({ ...prev, [foodId]: false }));
             }, 300);
@@ -521,7 +597,9 @@ export default function DietTab() {
     const loadingMessage = LOADING_MESSAGES[messageIndex];
 
     // --- KALORİYE VE MAKROLARA DAİR VERİLER ---
-    const activeCalories = activePlan === 'Bulk' ? calculatedTDEE + 500 : activePlan === 'Cut' ? calculatedTDEE - 500 : calculatedTDEE;
+    const rawActiveCalories = getRawTargetCalories(calculatedTDEE, activePlan);
+    const activeCalories = Math.max(MIN_TARGET_CALORIES, rawActiveCalories);
+    const canGeneratePlan = rawActiveCalories >= MIN_TARGET_CALORIES;
     const planMacros = generatedPlan?.macros || { protein: 0, fat: 0, carb: 0 };
     const totalCalFromMacros = (planMacros.protein * 4) + (planMacros.fat * 9) + (planMacros.carb * 4);
     const proteinPct = totalCalFromMacros > 0 ? Math.round((planMacros.protein * 4) / totalCalFromMacros * 100) : 0;
@@ -625,7 +703,7 @@ export default function DietTab() {
                                             )}
                                             <View style={styles.planCardHeader}>
                                                 <Text style={styles.planCardName} className="dark:text-slate-100">{plan.name}</Text>
-                                                <Feather name={plan.iconName as any} size={26} color={plan.iconColor} />
+                                                <Feather name={plan.iconName} size={26} color={plan.iconColor} />
                                             </View>
                                             <View style={styles.planCardCaloriesRow}>
                                                 <Text style={[styles.planCardCalories, { color: plan.iconColor }]}>{plan.calories}</Text>
@@ -689,14 +767,11 @@ export default function DietTab() {
                                                 activeOpacity={0.75}
                                                 style={[
                                                     styles.dietTypeCard,
-                                                    isSelected && styles.dietTypeCardActive
-                                                ]}
-                                                style={[
-                                                    styles.dietTypeCard,
-                                                    isSelected ? {
+                                                    isSelected && styles.dietTypeCardActive,
+                                                    isSelected && {
                                                         backgroundColor: isDark ? colors.brandDark + "22" : colors.lightAccent,
                                                         borderColor: isDark ? colors.brandDark + "4D" : colors.primary + "33",
-                                                    } : null
+                                                    }
                                                 ]}
                                                 className={`dark:border-slate-800 ${isSelected ? "" : "dark:bg-slate-900"}`}
                                             >
@@ -785,8 +860,9 @@ export default function DietTab() {
 
                                 <TouchableOpacity
                                     onPress={handleGeneratePlan}
-                                    activeOpacity={0.9}
-                                    style={styles.formSubmitButton}
+                                    disabled={!canGeneratePlan}
+                                    activeOpacity={canGeneratePlan ? 0.9 : 1}
+                                    style={[styles.formSubmitButton, !canGeneratePlan && styles.formSubmitButtonDisabled]}
                                 >
                                     <View style={styles.formSubmitButtonContent}>
                                         <View style={styles.brandSignalBars}>
@@ -882,7 +958,7 @@ export default function DietTab() {
                             {/* Öğün Listesi */}
                             <Text style={[styles.sectionHeader, { marginBottom: 16 }]}>GÜNLÜK ÖĞÜNLERİNİZ</Text>
 
-                            {generatedPlan.meals.map((meal, mIdx) => {
+                            {generatedPlan.meals.map((meal) => {
                                 const mealTotalCal = meal.items.reduce((sum, item) => sum + item.cal, 0);
                                 return (
                                     <View key={meal.id} style={styles.mealCard} className="dark:bg-slate-900 dark:border-slate-800">
@@ -992,7 +1068,7 @@ export default function DietTab() {
 }
 
 // --- PREMIUM VANILLA STYLES ---
-const getStyles = (isDark: boolean, colors: any) => StyleSheet.create({
+const getStyles = (isDark: boolean, colors: ThemeColors) => StyleSheet.create({
     brandHeader: {
         alignItems: "center",
         paddingVertical: 12,
@@ -1318,6 +1394,11 @@ const getStyles = (isDark: boolean, colors: any) => StyleSheet.create({
         shadowOpacity: 0.12,
         shadowRadius: 10,
         elevation: 3,
+    },
+    formSubmitButtonDisabled: {
+        backgroundColor: isDark ? "#334155" : "#cbd5e1",
+        shadowOpacity: 0,
+        elevation: 0,
     },
     formSubmitButtonContent: {
         flexDirection: "row",

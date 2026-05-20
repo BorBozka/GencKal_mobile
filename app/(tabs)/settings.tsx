@@ -2,17 +2,16 @@
 // Premium iOS-Style Ayarlar Sekmesi (Aydınlık tema kilidi uygulanmış)
 import React from "react";
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
-import { useSafeAreaInsets, SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import SegmentedControl, { SegmentedOption } from "../../src/components/SegmentedControl";
-import { ThemeContextType, useTheme, AccentColor } from "../../src/context/ThemeContext";
+import { ThemeContextType, useTheme } from "../../src/context/ThemeContext";
 import BrandLogo from "../../src/components/BrandLogo";
 
 export default function SettingsTab() {
     const router = useRouter();
     const { themeMode, setThemeMode, isDark, accentColor, setAccentColor, colors } = useTheme();
-    const insets = useSafeAreaInsets();
     
     const themeOptions: SegmentedOption<ThemeContextType["themeMode"]>[] = [
         { value: "aydinlik", label: "Aydınlık", icon: "sunny-outline" },

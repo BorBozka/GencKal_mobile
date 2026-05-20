@@ -14,7 +14,6 @@ export default function TabsLayout() {
             screenOptions={{
                 headerShown: true,
                 sceneStyle: { backgroundColor: isDark ? "#020617" : "#ffffff" },
-                sceneContainerStyle: { backgroundColor: isDark ? "#020617" : "#ffffff" },
                 headerStyle: {
                     backgroundColor: isDark ? "#0f172a" : "#ffffff",
                     elevation: 0,

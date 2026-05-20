@@ -9,14 +9,12 @@ import { useTheme } from "../context/ThemeContext";
 interface TargetSimulatorProps {
     currentWeight: number;
     leanMass: number;
-    currentBodyFat: number;
     onToggle?: (isOpen: boolean) => void;
 }
 
 export default function TargetSimulator({
     currentWeight,
     leanMass,
-    currentBodyFat,
     onToggle,
 }: TargetSimulatorProps) {
     const { isDark, colors } = useTheme();

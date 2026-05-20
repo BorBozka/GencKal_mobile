@@ -65,7 +65,7 @@ const THEME_STORAGE_KEY = '@genckal_theme_mode';
 const ACCENT_STORAGE_KEY = '@genckal_accent_color';
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-    const { colorScheme, setColorScheme } = useNativeWindColorScheme();
+    const { setColorScheme } = useNativeWindColorScheme();
     const [themeMode, setThemeModeState] = useState<ThemeMode>('sistem');
     const [accentColor, setAccentColorState] = useState<AccentColor>('indigo');
     const [isMounted, setIsMounted] = useState(false);

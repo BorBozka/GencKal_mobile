@@ -30,8 +30,20 @@
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
+    "extra": {
+      "apiPort": 3000
+    },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ]
     ]
   }
 }
