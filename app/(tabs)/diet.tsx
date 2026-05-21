@@ -21,6 +21,7 @@ type ApiDietResponse = Omit<GeneratedPlan, 'meals'> & {
 
 type ExpoApiConfig = {
     apiBaseUrl?: unknown;
+    apiPort?: unknown;
 };
 
 type DietPlanId = 'Bulk' | 'Maintain' | 'Cut';
@@ -83,14 +84,48 @@ const mealOptions: SegmentedOption<number>[] = [
 ];
 
 // --- API KONFİGÜRASYONU ---
+const DEFAULT_API_PORT = 3000;
+
+const trimTrailingSlash = (value: string) => value.replace(/\/$/, "");
+
+const getConfiguredApiPort = (extra: ExpoApiConfig | undefined) => {
+    if (typeof extra?.apiPort === "number" && Number.isFinite(extra.apiPort)) {
+        return String(extra.apiPort);
+    }
+
+    if (typeof extra?.apiPort === "string" && extra.apiPort.trim()) {
+        return extra.apiPort.trim();
+    }
+
+    return String(DEFAULT_API_PORT);
+};
+
+const extractHostname = (hostUri: string) => {
+    const withoutProtocol = hostUri.replace(/^[a-z][a-z\d+\-.]*:\/\//i, "");
+    const withoutAuth = withoutProtocol.split("@").pop() ?? withoutProtocol;
+    const hostWithPort = withoutAuth.split("/")[0];
+
+    if (hostWithPort.startsWith("[")) {
+        return hostWithPort.slice(1, hostWithPort.indexOf("]"));
+    }
+
+    return hostWithPort.split(":")[0];
+};
+
 const getConfiguredApiBaseUrl = () => {
     const extra = Constants.expoConfig?.extra as ExpoApiConfig | undefined;
     const configuredBaseUrl = typeof extra?.apiBaseUrl === "string" ? extra.apiBaseUrl.trim() : "";
     if (configuredBaseUrl) {
-        return configuredBaseUrl.replace(/\/$/, "");
+        return trimTrailingSlash(configuredBaseUrl);
     }
 
-    return null;
+    const hostUri = Constants.expoConfig?.hostUri;
+    const runtimeHost = typeof hostUri === "string" ? extractHostname(hostUri) : "";
+    if (!runtimeHost) {
+        return null;
+    }
+
+    return `http://${runtimeHost}:${getConfiguredApiPort(extra)}`;
 };
 
 // Benzersiz ID üretimi için monoton sayaç (2.7 - Date.now() çakışma koruması)
