@@ -7,7 +7,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "scheme": "genckal",
+    "scheme": "genckalculator",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",

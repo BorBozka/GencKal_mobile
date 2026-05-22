@@ -61,8 +61,16 @@ export interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-const THEME_STORAGE_KEY = '@genckal_theme_mode';
-const ACCENT_STORAGE_KEY = '@genckal_accent_color';
+const THEME_STORAGE_KEY = '@genckalculator_theme_mode';
+const ACCENT_STORAGE_KEY = '@genckalculator_accent_color';
+const LEGACY_THEME_STORAGE_KEY = '@genckal_theme_mode';
+const LEGACY_ACCENT_STORAGE_KEY = '@genckal_accent_color';
+
+const isThemeMode = (value: string | null): value is ThemeMode =>
+    value === 'aydinlik' || value === 'karanlik' || value === 'sistem';
+
+const isAccentColor = (value: string | null): value is AccentColor =>
+    value === 'indigo' || value === 'yesil' || value === 'kirmizi';
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
     const { setColorScheme } = useNativeWindColorScheme();
@@ -86,13 +94,39 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         const loadTheme = async () => {
             try {
-                const storedTheme = await AsyncStorage.getItem(THEME_STORAGE_KEY);
-                if (storedTheme === 'aydinlik' || storedTheme === 'karanlik' || storedTheme === 'sistem') {
-                    setThemeModeState(storedTheme as ThemeMode);
+                const [storedTheme, legacyTheme, storedAccent, legacyAccent] = await AsyncStorage.multiGet([
+                    THEME_STORAGE_KEY,
+                    LEGACY_THEME_STORAGE_KEY,
+                    ACCENT_STORAGE_KEY,
+                    LEGACY_ACCENT_STORAGE_KEY
+                ]);
+
+                const themeValue = storedTheme[1];
+                const legacyThemeValue = legacyTheme[1];
+                const resolvedTheme = isThemeMode(themeValue)
+                    ? themeValue
+                    : isThemeMode(legacyThemeValue)
+                        ? legacyThemeValue
+                        : null;
+                if (resolvedTheme) {
+                    setThemeModeState(resolvedTheme);
+                    if (!isThemeMode(themeValue)) {
+                        await AsyncStorage.setItem(THEME_STORAGE_KEY, resolvedTheme);
+                    }
                 }
-                const storedAccent = await AsyncStorage.getItem(ACCENT_STORAGE_KEY);
-                if (storedAccent === 'indigo' || storedAccent === 'yesil' || storedAccent === 'kirmizi') {
-                    setAccentColorState(storedAccent as AccentColor);
+
+                const accentValue = storedAccent[1];
+                const legacyAccentValue = legacyAccent[1];
+                const resolvedAccent = isAccentColor(accentValue)
+                    ? accentValue
+                    : isAccentColor(legacyAccentValue)
+                        ? legacyAccentValue
+                        : null;
+                if (resolvedAccent) {
+                    setAccentColorState(resolvedAccent);
+                    if (!isAccentColor(accentValue)) {
+                        await AsyncStorage.setItem(ACCENT_STORAGE_KEY, resolvedAccent);
+                    }
                 }
             } catch (error) {
                 console.error("Failed to load theme/accent from storage", error);

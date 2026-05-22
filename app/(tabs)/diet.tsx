@@ -85,6 +85,7 @@ const mealOptions: SegmentedOption<number>[] = [
 
 // --- API KONFİGÜRASYONU ---
 const DEFAULT_API_PORT = 3000;
+let hasWarnedMissingApiHost = false;
 
 const trimTrailingSlash = (value: string) => value.replace(/\/$/, "");
 
@@ -112,6 +113,38 @@ const extractHostname = (hostUri: string) => {
     return hostWithPort.split(":")[0];
 };
 
+const getBrowserHostname = () => {
+    const location = (globalThis as { location?: { hostname?: unknown } }).location;
+    return typeof location?.hostname === "string" ? location.hostname : "";
+};
+
+const getRuntimeApiHost = () => {
+    const hostUri = Constants.expoConfig?.hostUri;
+    const runtimeHost = typeof hostUri === "string" ? extractHostname(hostUri) : "";
+    if (runtimeHost) {
+        return runtimeHost;
+    }
+
+    const linkingUri = Constants.linkingUri;
+    const linkingHost = typeof linkingUri === "string" ? extractHostname(linkingUri) : "";
+    if (linkingHost) {
+        return linkingHost;
+    }
+
+    return getBrowserHostname();
+};
+
+const warnMissingApiHost = () => {
+    if (hasWarnedMissingApiHost) {
+        return;
+    }
+
+    hasWarnedMissingApiHost = true;
+    console.warn(
+        "API base URL yapılandırılamadı. Constants.expoConfig.hostUri, Constants.linkingUri ve browser hostname boş; backend için app.json expo.extra.apiBaseUrl değerini ayarlayın."
+    );
+};
+
 const getConfiguredApiBaseUrl = () => {
     const extra = Constants.expoConfig?.extra as ExpoApiConfig | undefined;
     const configuredBaseUrl = typeof extra?.apiBaseUrl === "string" ? extra.apiBaseUrl.trim() : "";
@@ -119,9 +152,9 @@ const getConfiguredApiBaseUrl = () => {
         return trimTrailingSlash(configuredBaseUrl);
     }
 
-    const hostUri = Constants.expoConfig?.hostUri;
-    const runtimeHost = typeof hostUri === "string" ? extractHostname(hostUri) : "";
+    const runtimeHost = getRuntimeApiHost();
     if (!runtimeHost) {
+        warnMissingApiHost();
         return null;
     }
 
