@@ -216,7 +216,7 @@ export default function InformationScreen() {
                 <View style={{ height: 1, backgroundColor: isDark ? "#1e293b" : "#f1f5f9", marginVertical: 16 }} />
 
                 {/* FFMI Bölümü */}
-                <SectionTitle>FFMI (Yağsız Vücut Kütlesi İndeksi) Nedir?</SectionTitle>
+                <SectionTitle>FFMI (Yağsız Vücut Kitle İndeksi) Nedir?</SectionTitle>
                 <Text style={{ fontSize: 14, color: isDark ? "#cbd5e1" : "#475569", lineHeight: 22, marginBottom: 12 }}>
                     FFMI, boyunuza oranla ne kadar kas kütlesine sahip olduğunuzu hesaplamanızı sağlayan bir indekstir. Bu indeks, vücut geliştiriciler ve sporcular tarafından gelişimlerini takip etmek için yaygın olarak kullanılır ve BMI'ye göre çok daha güvenilirdir.
                 </Text>
