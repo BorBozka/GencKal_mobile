@@ -1,11 +1,12 @@
 // app/contact.tsx
 // İletişim modalı — Aydınlık tema kilidi uygulanmış
 import React from "react";
-import { View, Text, ScrollView, TouchableOpacity, Linking, Alert } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../src/context/ThemeContext";
+import { useAppDialog } from "../src/context/AppDialogContext";
 
 // 2.6: Tüm marka referansları tek bir yerde — tutarlılık için
 const BRAND = {
@@ -19,6 +20,7 @@ const BRAND = {
 export default function ContactScreen() {
     const router = useRouter();
     const { isDark, colors } = useTheme();
+    const { showDialog } = useAppDialog();
     const insets = useSafeAreaInsets();
 
     // 3.7: Tek bir genel yardımcı — üç duplicate handler yerine
@@ -28,10 +30,18 @@ export default function ContactScreen() {
             if (canOpen) {
                 await Linking.openURL(url);
             } else {
-                Alert.alert(errorTitle, "Uygulama veya tarayıcı açılamadı.");
+                showDialog({
+                    title: errorTitle,
+                    message: "Uygulama veya tarayıcı açılamadı.",
+                    icon: "alert-circle-outline",
+                });
             }
         } catch {
-            Alert.alert("Hata", "Bağlantı açma işlemi başarısız oldu.");
+            showDialog({
+                title: "Hata",
+                message: "Bağlantı açma işlemi başarısız oldu.",
+                icon: "alert-circle-outline",
+            });
         }
     };
 

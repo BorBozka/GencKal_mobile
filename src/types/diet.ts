@@ -25,3 +25,30 @@ export interface GeneratedPlan {
     macros: FoodItemMacros;
     meals: MealItem[];
 }
+
+export interface SavedDietPlanSummary {
+    id: string;
+    title: string;
+    targetCalories: number;
+    dietType: string;
+    mealsPerDay: number;
+    allergies: string;
+    macros: FoodItemMacros;
+    createdAt: string;
+}
+
+export interface SavedDietPlanItem {
+    name: string;
+    cal: number;
+    fullText: string;
+    macros: FoodItemMacros;
+}
+
+export interface SavedDietPlanMeal {
+    title: string;
+    items: SavedDietPlanItem[];
+}
+
+export interface SavedDietPlan extends SavedDietPlanSummary {
+    meals: SavedDietPlanMeal[];
+}

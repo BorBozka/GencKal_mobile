@@ -3,11 +3,13 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, BackHandler, KeyboardAvoidingView, Platform, Keyboard, DeviceEventEmitter } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Feather, Ionicons } from "@expo/vector-icons";
-import { Tabs, useFocusEffect, useNavigation } from "expo-router";
+import { Tabs, useFocusEffect, useNavigation, useRouter } from "expo-router";
 import Constants from "expo-constants";
 import * as Haptics from "expo-haptics";
 import { useFormContext } from "../../src/context/FormContext";
 import { ThemeColors, useTheme } from "../../src/context/ThemeContext";
+import { useAuth } from "../../src/context/AuthContext";
+import { useAppDialog } from "../../src/context/AppDialogContext";
 import TDEECalculatorPanel from "../../src/components/TDEECalculatorPanel";
 import BrandLogo from "../../src/components/BrandLogo";
 import SegmentedControl, { SegmentedOption } from "../../src/components/SegmentedControl";
@@ -245,6 +247,9 @@ export default function DietTab() {
         setDietStep: setStep
     } = useFormContext();
     const { isDark, colors } = useTheme();
+    const { user, token, authHeaders } = useAuth();
+    const { showDialog } = useAppDialog();
+    const router = useRouter();
     const styles = useMemo(() => getStyles(isDark, colors), [isDark, colors]);
 
     useEffect(() => {
@@ -257,6 +262,9 @@ export default function DietTab() {
         );
         return () => {
             keyboardDidHideListener.remove();
+            if (saveFeedbackTimeoutRef.current) {
+                clearTimeout(saveFeedbackTimeoutRef.current);
+            }
         };
     }, []);
 
@@ -278,9 +286,12 @@ export default function DietTab() {
     const [selectedPlanId, setSelectedPlanId] = useState<'Bulk' | 'Maintain' | 'Cut' | null>(null);
     const [isInputFocused, setIsInputFocused] = useState(false);
     const [messageIndex, setMessageIndex] = useState(0);
+    const saveFeedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // --- AI ÜRETİM STATELERİ ---
     const [isLocalSimulated, setIsLocalSimulated] = useState(false);
+    const [isSavingPlan, setIsSavingPlan] = useState(false);
+    const [isPlanSaveSuccess, setIsPlanSaveSuccess] = useState(false);
 
     // --- SWAP YÜKLENİYOR STATELERİ ---
     const [swappingFoodIds, setSwappingFoodIds] = useState<Record<string, boolean>>({});
@@ -620,6 +631,73 @@ export default function DietTab() {
                 });
                 setSwappingFoodIds(prev => ({ ...prev, [foodId]: false }));
             }, 300);
+        }
+    };
+
+    const handleSavePlan = async () => {
+        if (!generatedPlan) return;
+
+        if (!user || !token) {
+            showDialog({
+                title: "Giriş yapmanız gerekmektedir",
+                message: "Diyet planını kaydetmek için önce giriş yapın.",
+                icon: "person-circle-outline",
+                actions: [
+                    { label: "Vazgeç", style: "cancel" },
+                    { label: "Giriş Yap", onPress: () => router.push("/auth") },
+                ],
+            });
+            return;
+        }
+
+        setIsSavingPlan(true);
+        setIsPlanSaveSuccess(false);
+        try {
+            const baseUrl = getConfiguredApiBaseUrl();
+            if (!baseUrl) {
+                throw new Error("API base URL yapılandırılmadı");
+            }
+
+            const targetCalories = getDisplayTargetCalories(calculatedTDEE, activePlan);
+            const selectedPlanName = plans.find((plan) => plan.id === activePlan)?.name || "Diyet Planı";
+            const response = await fetch(`${baseUrl}/api/diet-plans`, {
+                method: "POST",
+                headers: {
+                    ...authHeaders(),
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    title: `${selectedPlanName} - ${targetCalories} kcal`,
+                    targetCalories,
+                    dietType,
+                    mealsPerDay,
+                    allergies: allergyList.join(", "),
+                    macros: generatedPlan.macros,
+                    meals: generatedPlan.meals,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => null);
+                throw new Error(errorData?.error || "Plan kaydedilemedi.");
+            }
+
+            setIsPlanSaveSuccess(true);
+            if (saveFeedbackTimeoutRef.current) {
+                clearTimeout(saveFeedbackTimeoutRef.current);
+            }
+            saveFeedbackTimeoutRef.current = setTimeout(() => {
+                setIsPlanSaveSuccess(false);
+                saveFeedbackTimeoutRef.current = null;
+            }, 1800);
+        } catch (error) {
+            showDialog({
+                title: "Plan kaydedilemedi",
+                message: error instanceof Error ? error.message : "Beklenmeyen bir hata oluştu.",
+                icon: "alert-circle-outline",
+            });
+        } finally {
+            setIsSavingPlan(false);
         }
     };
 
@@ -1105,6 +1183,24 @@ export default function DietTab() {
                                     </View>
                                 );
                             })}
+
+                            <TouchableOpacity
+                                onPress={handleSavePlan}
+                                disabled={isSavingPlan}
+                                activeOpacity={0.85}
+                                style={[
+                                    styles.resultSaveButton,
+                                    isPlanSaveSuccess && styles.resultSaveButtonSuccess,
+                                    isSavingPlan && styles.resultSaveButtonDisabled
+                                ]}
+                            >
+                                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                                    <Ionicons name={isPlanSaveSuccess ? "bookmark" : "bookmark-outline"} size={18} color="#ffffff" />
+                                    <Text style={styles.resultSaveButtonText}>
+                                        {isSavingPlan ? "Kaydediliyor..." : isPlanSaveSuccess ? "Kaydedildi" : "Bu Diyet Planını Kaydet"}
+                                    </Text>
+                                </View>
+                            </TouchableOpacity>
 
                             {/* Son Eylem Butonları */}
                             <View style={{ marginTop: 24, flexDirection: "row", gap: 12 }}>
@@ -1702,6 +1798,25 @@ const getStyles = (isDark: boolean, colors: ThemeColors) => StyleSheet.create({
         backgroundColor: isDark ? "#1e293b" : "#f1f5f9",
         borderRadius: 6,
         width: "90%",
+    },
+    resultSaveButton: {
+        marginTop: 8,
+        paddingVertical: 15,
+        backgroundColor: isDark ? colors.brandDark : colors.primary,
+        borderRadius: 16,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    resultSaveButtonSuccess: {
+        backgroundColor: "#059669",
+    },
+    resultSaveButtonDisabled: {
+        opacity: 0.7,
+    },
+    resultSaveButtonText: {
+        color: "#ffffff",
+        fontWeight: "800",
+        fontSize: 14,
     },
     resultResetButton: {
         flex: 1,

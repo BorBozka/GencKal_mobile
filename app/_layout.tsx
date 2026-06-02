@@ -12,6 +12,8 @@ import { ThemeProvider as NavigationThemeProvider, DarkTheme, DefaultTheme } fro
 import * as SystemUI from "expo-system-ui";
 import { FormProvider } from "../src/context/FormContext";
 import { ThemeProvider, useTheme } from "../src/context/ThemeContext";
+import { AuthProvider } from "../src/context/AuthContext";
+import { AppDialogProvider } from "../src/context/AppDialogContext";
 
 const CustomDarkTheme = {
     ...DarkTheme,
@@ -73,6 +75,20 @@ function AppContent() {
                             gestureEnabled: true,
                         }}
                     />
+                    <Stack.Screen
+                        name="auth"
+                        options={{
+                            headerShown: false,
+                            gestureEnabled: true,
+                        }}
+                    />
+                    <Stack.Screen
+                        name="saved-plans"
+                        options={{
+                            headerShown: false,
+                            gestureEnabled: true,
+                        }}
+                    />
                 </Stack>
             </NavigationThemeProvider>
         </SafeAreaProvider>
@@ -82,9 +98,13 @@ function AppContent() {
 export default function RootLayout() {
     return (
         <ThemeProvider>
-            <FormProvider>
-                <AppContent />
-            </FormProvider>
+            <AppDialogProvider>
+                <AuthProvider>
+                    <FormProvider>
+                        <AppContent />
+                    </FormProvider>
+                </AuthProvider>
+            </AppDialogProvider>
         </ThemeProvider>
     );
 }

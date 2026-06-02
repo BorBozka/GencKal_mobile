@@ -27,6 +27,12 @@ export interface MacroDistribution {
     carb: number;
 }
 
+export interface AuthUser {
+    id: string;
+    name: string;
+    email: string;
+}
+
 export interface DiyetVerileri {
     diyetTipi: DiyetTipi;
     ogunSayisi: number;
