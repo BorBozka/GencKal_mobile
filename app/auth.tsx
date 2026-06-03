@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import BrandLogo from "../src/components/BrandLogo";
 import { useAuth } from "../src/context/AuthContext";
@@ -12,6 +12,7 @@ type AuthMode = "signin" | "signup";
 
 export default function AuthScreen() {
     const router = useRouter();
+    const { returnTo, pendingSave } = useLocalSearchParams<{ returnTo?: string; pendingSave?: string }>();
     const { signin, signup } = useAuth();
     const { isDark, colors } = useTheme();
     const { showDialog } = useAppDialog();
@@ -30,7 +31,10 @@ export default function AuthScreen() {
             } else {
                 await signin(email, password);
             }
-            router.replace("/settings");
+            router.replace(returnTo === "diet-result"
+                ? `/diet${pendingSave === "diet-plan-save" ? "?pendingSave=diet-plan-save" : ""}`
+                : "/settings"
+            );
         } catch (error) {
             showDialog({
                 title: mode === "signup" ? "Kayıt başarısız" : "Giriş başarısız",

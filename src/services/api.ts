@@ -7,8 +7,10 @@ type ExpoApiConfig = {
 
 const DEFAULT_API_PORT = 3000;
 let hasWarnedMissingApiHost = false;
+let hasWarnedInsecureApiUrl = false;
 
 const trimTrailingSlash = (value: string) => value.replace(/\/$/, "");
+const isDevelopment = typeof __DEV__ === "boolean" && __DEV__;
 
 const getConfiguredApiPort = (extra: ExpoApiConfig | undefined) => {
     if (typeof extra?.apiPort === "number" && Number.isFinite(extra.apiPort)) {
@@ -66,11 +68,42 @@ const warnMissingApiHost = () => {
     );
 };
 
+const warnInsecureApiUrl = (baseUrl: string) => {
+    if (hasWarnedInsecureApiUrl) {
+        return;
+    }
+
+    hasWarnedInsecureApiUrl = true;
+    console.warn(
+        `Güvensiz API base URL reddedildi: ${baseUrl}. Production için HTTPS kullanın.`
+    );
+};
+
+const resolveApiBaseUrl = (baseUrl: string) => {
+    const trimmedBaseUrl = trimTrailingSlash(baseUrl);
+    const normalizedBaseUrl = trimmedBaseUrl.toLowerCase();
+    if (normalizedBaseUrl.startsWith("https://")) {
+        return trimmedBaseUrl;
+    }
+
+    if (isDevelopment && normalizedBaseUrl.startsWith("http://")) {
+        return trimmedBaseUrl;
+    }
+
+    warnInsecureApiUrl(trimmedBaseUrl);
+    return null;
+};
+
 export const getConfiguredApiBaseUrl = () => {
     const extra = Constants.expoConfig?.extra as ExpoApiConfig | undefined;
     const configuredBaseUrl = typeof extra?.apiBaseUrl === "string" ? extra.apiBaseUrl.trim() : "";
     if (configuredBaseUrl) {
-        return trimTrailingSlash(configuredBaseUrl);
+        return resolveApiBaseUrl(configuredBaseUrl);
+    }
+
+    if (!isDevelopment) {
+        warnMissingApiHost();
+        return null;
     }
 
     const runtimeHost = getRuntimeApiHost();
@@ -79,7 +112,16 @@ export const getConfiguredApiBaseUrl = () => {
         return null;
     }
 
-    return `http://${runtimeHost}:${getConfiguredApiPort(extra)}`;
+    return resolveApiBaseUrl(`http://${runtimeHost}:${getConfiguredApiPort(extra)}`);
+};
+
+export const getConfiguredApiBaseUrlOrThrow = () => {
+    const baseUrl = getConfiguredApiBaseUrl();
+    if (!baseUrl) {
+        throw new Error("API base URL yapılandırılmadı.");
+    }
+
+    return baseUrl;
 };
 
 export async function parseApiError(response: Response): Promise<string> {

@@ -3,8 +3,7 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, BackHandler, KeyboardAvoidingView, Platform, Keyboard, DeviceEventEmitter } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Feather, Ionicons } from "@expo/vector-icons";
-import { Tabs, useFocusEffect, useNavigation, useRouter } from "expo-router";
-import Constants from "expo-constants";
+import { Tabs, useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useFormContext } from "../../src/context/FormContext";
 import { ThemeColors, useTheme } from "../../src/context/ThemeContext";
@@ -13,18 +12,10 @@ import { useAppDialog } from "../../src/context/AppDialogContext";
 import TDEECalculatorPanel from "../../src/components/TDEECalculatorPanel";
 import BrandLogo from "../../src/components/BrandLogo";
 import SegmentedControl, { SegmentedOption } from "../../src/components/SegmentedControl";
+import { requestGeneratedDietPlan, requestSwapFood, saveGeneratedDietPlan } from "../../src/services/dietApi";
 import { generateLocalFallbackPlan, generateLocalSwapFood } from "../../src/services/localDietGenerator";
 import type { GeneratedPlan, FoodItem, FoodItemMacros } from "../../src/types/diet";
 import type { DiyetTipi } from "../../src/types";
-
-type ApiDietResponse = Omit<GeneratedPlan, 'meals'> & {
-    meals: Array<{ title: string; items: Array<{ name: string; cal: number; fullText: string; macros?: FoodItemMacros }> }>;
-};
-
-type ExpoApiConfig = {
-    apiBaseUrl?: unknown;
-    apiPort?: unknown;
-};
 
 type DietPlanId = 'Bulk' | 'Maintain' | 'Cut';
 
@@ -36,37 +27,6 @@ type PlanOption = {
     iconColor: string;
     macros: FoodItemMacros;
 };
-
-const isMacroObject = (value: unknown): value is FoodItemMacros => {
-    if (!value || typeof value !== 'object') return false;
-    const macros = value as Record<string, unknown>;
-    return typeof macros.protein === 'number'
-        && typeof macros.fat === 'number'
-        && typeof macros.carb === 'number';
-};
-
-// API yanıtı için runtime type-guard
-function isValidDietResponse(data: unknown): data is ApiDietResponse {
-    if (!data || typeof data !== 'object') return false;
-    const d = data as Record<string, unknown>;
-    if (!Array.isArray(d.meals)) return false;
-    if (!isMacroObject(d.macros)) return false;
-    return d.meals.every((meal) => {
-        if (!meal || typeof meal !== 'object') return false;
-        const m = meal as Record<string, unknown>;
-        if (typeof m.title !== 'string' || !Array.isArray(m.items)) return false;
-
-        return m.items.every((item) => {
-            if (!item || typeof item !== 'object') return false;
-            const food = item as Record<string, unknown>;
-            const hasRequiredFields = typeof food.name === 'string'
-                && typeof food.cal === 'number'
-                && typeof food.fullText === 'string';
-            if (!hasRequiredFields) return false;
-            return food.macros === undefined || isMacroObject(food.macros);
-        });
-    });
-}
 
 // --- DİYET TİPİ SEÇENEKLERİ ---
 const dietTypeOptions = [
@@ -84,84 +44,6 @@ const mealOptions: SegmentedOption<number>[] = [
     { value: 4, label: "4 Öğün" },
     { value: 5, label: "5 Öğün" },
 ];
-
-// --- API KONFİGÜRASYONU ---
-const DEFAULT_API_PORT = 3000;
-let hasWarnedMissingApiHost = false;
-
-const trimTrailingSlash = (value: string) => value.replace(/\/$/, "");
-
-const getConfiguredApiPort = (extra: ExpoApiConfig | undefined) => {
-    if (typeof extra?.apiPort === "number" && Number.isFinite(extra.apiPort)) {
-        return String(extra.apiPort);
-    }
-
-    if (typeof extra?.apiPort === "string" && extra.apiPort.trim()) {
-        return extra.apiPort.trim();
-    }
-
-    return String(DEFAULT_API_PORT);
-};
-
-const extractHostname = (hostUri: string) => {
-    const withoutProtocol = hostUri.replace(/^[a-z][a-z\d+\-.]*:\/\//i, "");
-    const withoutAuth = withoutProtocol.split("@").pop() ?? withoutProtocol;
-    const hostWithPort = withoutAuth.split("/")[0];
-
-    if (hostWithPort.startsWith("[")) {
-        return hostWithPort.slice(1, hostWithPort.indexOf("]"));
-    }
-
-    return hostWithPort.split(":")[0];
-};
-
-const getBrowserHostname = () => {
-    const location = (globalThis as { location?: { hostname?: unknown } }).location;
-    return typeof location?.hostname === "string" ? location.hostname : "";
-};
-
-const getRuntimeApiHost = () => {
-    const hostUri = Constants.expoConfig?.hostUri;
-    const runtimeHost = typeof hostUri === "string" ? extractHostname(hostUri) : "";
-    if (runtimeHost) {
-        return runtimeHost;
-    }
-
-    const linkingUri = Constants.linkingUri;
-    const linkingHost = typeof linkingUri === "string" ? extractHostname(linkingUri) : "";
-    if (linkingHost) {
-        return linkingHost;
-    }
-
-    return getBrowserHostname();
-};
-
-const warnMissingApiHost = () => {
-    if (hasWarnedMissingApiHost) {
-        return;
-    }
-
-    hasWarnedMissingApiHost = true;
-    console.warn(
-        "API base URL yapılandırılamadı. Constants.expoConfig.hostUri, Constants.linkingUri ve browser hostname boş; backend için app.json expo.extra.apiBaseUrl değerini ayarlayın."
-    );
-};
-
-const getConfiguredApiBaseUrl = () => {
-    const extra = Constants.expoConfig?.extra as ExpoApiConfig | undefined;
-    const configuredBaseUrl = typeof extra?.apiBaseUrl === "string" ? extra.apiBaseUrl.trim() : "";
-    if (configuredBaseUrl) {
-        return trimTrailingSlash(configuredBaseUrl);
-    }
-
-    const runtimeHost = getRuntimeApiHost();
-    if (!runtimeHost) {
-        warnMissingApiHost();
-        return null;
-    }
-
-    return `http://${runtimeHost}:${getConfiguredApiPort(extra)}`;
-};
 
 // Benzersiz ID üretimi için monoton sayaç (2.7 - Date.now() çakışma koruması)
 let _idCounter = 0;
@@ -250,6 +132,7 @@ export default function DietTab() {
     const { user, token, authHeaders } = useAuth();
     const { showDialog } = useAppDialog();
     const router = useRouter();
+    const { pendingSave } = useLocalSearchParams<{ pendingSave?: string }>();
     const styles = useMemo(() => getStyles(isDark, colors), [isDark, colors]);
 
     useEffect(() => {
@@ -287,6 +170,7 @@ export default function DietTab() {
     const [isInputFocused, setIsInputFocused] = useState(false);
     const [messageIndex, setMessageIndex] = useState(0);
     const saveFeedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const pendingSaveHandledRef = useRef(false);
 
     // --- AI ÜRETİM STATELERİ ---
     const [isLocalSimulated, setIsLocalSimulated] = useState(false);
@@ -342,7 +226,7 @@ export default function DietTab() {
             unsubscribeFocus();
             subscription.remove();
         };
-    }, [navigation, step, generatedPlan]);
+    }, [navigation, step, generatedPlan, setStep]);
 
     // Android fiziksel geri tuşu ve iOS kenardan kaydırarak geri gitme (swipe-back) jestlerini yakalayarak
     // kullanıcıyı hesaplayıcıya veya önceki modala atmak yerine akıllıca bir önceki sihirbaz adımına döndürelim!
@@ -365,7 +249,7 @@ export default function DietTab() {
         });
 
         return unsubscribe;
-    }, [navigation, step]);
+    }, [navigation, step, setStep]);
 
     // Donanım geri tuşunu ve Android/Emulator kenardan geri kaydırma (Edge-Swipe Back) jestlerini sadece diet tabı aktifken yakalayalım
     useFocusEffect(
@@ -397,7 +281,7 @@ export default function DietTab() {
 
             const subscription = BackHandler.addEventListener("hardwareBackPress", handleHardwareBack);
             return () => subscription.remove();
-        }, [step, isInputFocused])
+        }, [step, isInputFocused, setStep])
     );
 
     // Taşındı (üst satırlarda tanımlandı)
@@ -468,33 +352,14 @@ export default function DietTab() {
             setDiyetAlan("diyetTipi", dietType);
             setDiyetAlan("alerjenler", allergyList);
 
-            const baseUrl = getConfiguredApiBaseUrl();
-            if (!baseUrl) {
-                throw new Error("API base URL yapılandırılmadı");
-            }
-
-            const response = await fetch(`${baseUrl}/api/generate-diet`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
+            const rawData = await requestGeneratedDietPlan({
+                targetCalories,
+                dietType,
+                mealsPerDay,
+                allergies: allergyList,
                 signal: controller.signal,
-                body: JSON.stringify({
-                    targetCalories,
-                    dietType,
-                    mealsPerDay,
-                    allergies: allergyList.join(", ") || undefined
-                }),
             });
             clearTimeout(timeoutId);
-
-            if (!response.ok) {
-                throw new Error("Sunucu hatası");
-            }
-
-            const rawData: unknown = await response.json();
-
-            if (!isValidDietResponse(rawData)) {
-                throw new Error("API'den geçersiz yanıt formatı alındı");
-            }
 
             // 2.7: API yanıtı item ID'leri de monoton sayaç ile üretilsin
             const planWithIds: GeneratedPlan = {
@@ -515,7 +380,7 @@ export default function DietTab() {
                 setGeneratedPlan(planWithIds);
                 setStep("result");
             }, 600);
-        } catch (error) {
+        } catch {
             clearTimeout(timeoutId);
             // Sunucu çevrimdışıysa yerel simülasyon fallback'ini devreye al!
             const fallbackData = generateLocalFallbackPlan(targetCalories, dietType, mealsPerDay, allergyList);
@@ -568,40 +433,17 @@ export default function DietTab() {
         const timeoutId = setTimeout(() => controller.abort(), 35000); // Backend can wait up to 30s for a swap.
 
         try {
-            const baseUrl = getConfiguredApiBaseUrl();
-            if (!baseUrl) {
-                throw new Error("API base URL yapılandırılmadı");
-            }
-
-            const response = await fetch(`${baseUrl}/api/swap-food`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
+            const rawSwapFood = await requestSwapFood({
+                currentFood: targetFood,
+                mealTitle: targetMeal.title,
+                dietType,
+                allergies: allergyList,
                 signal: controller.signal,
-                body: JSON.stringify({
-                    currentFood: {
-                        name: targetFood.name,
-                        cal: targetFood.cal,
-                        fullText: targetFood.fullText,
-                        macros: targetFood.macros || { protein: 0, fat: 0, carb: 0 }
-                    },
-                    mealTitle: targetMeal.title,
-                    dietType,
-                    allergies: allergyList.join(", ") || undefined
-                }),
             });
             clearTimeout(timeoutId);
 
-            if (!response.ok) {
-                throw new Error("Swap hatası");
-            }
-
-            const rawSwapFood: unknown = await response.json();
-            // Temel yapı doğrulaması
-            if (!rawSwapFood || typeof rawSwapFood !== 'object' || !('name' in rawSwapFood) || !('cal' in rawSwapFood)) {
-                throw new Error("Swap API geçersiz yanıt döndürdü");
-            }
             const newFoodWithId: FoodItem = {
-                ...(rawSwapFood as Omit<FoodItem, 'id'>),
+                ...rawSwapFood,
                 id: `food-swapped-${uniqueId()}`
             };
 
@@ -615,7 +457,7 @@ export default function DietTab() {
                 });
                 setSwappingFoodIds(prev => ({ ...prev, [foodId]: false }));
             }, 300);
-        } catch (err) {
+        } catch {
             clearTimeout(timeoutId);
             // macros yoksa local swap'ı güvenli şekilde çalıştır
             const safeMacros = targetFood.macros ?? { protein: 0, fat: 0, carb: 0 };
@@ -644,7 +486,7 @@ export default function DietTab() {
                 icon: "person-circle-outline",
                 actions: [
                     { label: "Vazgeç", style: "cancel" },
-                    { label: "Giriş Yap", onPress: () => router.push("/auth") },
+                    { label: "Giriş Yap", onPress: () => router.push("/auth?returnTo=diet-result&pendingSave=diet-plan-save") },
                 ],
             });
             return;
@@ -653,34 +495,17 @@ export default function DietTab() {
         setIsSavingPlan(true);
         setIsPlanSaveSuccess(false);
         try {
-            const baseUrl = getConfiguredApiBaseUrl();
-            if (!baseUrl) {
-                throw new Error("API base URL yapılandırılmadı");
-            }
-
             const targetCalories = getDisplayTargetCalories(calculatedTDEE, activePlan);
             const selectedPlanName = plans.find((plan) => plan.id === activePlan)?.name || "Diyet Planı";
-            const response = await fetch(`${baseUrl}/api/diet-plans`, {
-                method: "POST",
-                headers: {
-                    ...authHeaders(),
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    title: `${selectedPlanName} - ${targetCalories} kcal`,
-                    targetCalories,
-                    dietType,
-                    mealsPerDay,
-                    allergies: allergyList.join(", "),
-                    macros: generatedPlan.macros,
-                    meals: generatedPlan.meals,
-                }),
+            await saveGeneratedDietPlan({
+                authHeaders: authHeaders(),
+                title: `${selectedPlanName} - ${targetCalories} kcal`,
+                targetCalories,
+                dietType,
+                mealsPerDay,
+                allergies: allergyList,
+                plan: generatedPlan,
             });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => null);
-                throw new Error(errorData?.error || "Plan kaydedilemedi.");
-            }
 
             setIsPlanSaveSuccess(true);
             if (saveFeedbackTimeoutRef.current) {
@@ -700,6 +525,21 @@ export default function DietTab() {
             setIsSavingPlan(false);
         }
     };
+
+    useEffect(() => {
+        if (pendingSave !== "diet-plan-save") {
+            pendingSaveHandledRef.current = false;
+            return;
+        }
+
+        if (pendingSaveHandledRef.current || !user || !token || !generatedPlan) {
+            return;
+        }
+
+        pendingSaveHandledRef.current = true;
+        setStep("result");
+        void handleSavePlan();
+    }, [pendingSave, user, token, generatedPlan, setStep]);
 
     // --- AKILLI PROGRESS VE MESAJ DÖNGÜSÜ ---
     useEffect(() => {

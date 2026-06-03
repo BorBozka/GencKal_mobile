@@ -36,7 +36,7 @@ export default function TargetSimulator({
             useNativeDriver: false, // Height animasyonları için false olmalı
             easing: Easing.inOut(Easing.ease),
         }).start();
-    }, [isSimulatorOpen]);
+    }, [animation, isSimulatorOpen]);
 
     // Interpolations
     const animatedHeight = animation.interpolate({

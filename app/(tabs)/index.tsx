@@ -56,7 +56,6 @@ export default function CalculatorTab() {
                         <ReferenceScale
                             score={calculatedFFMI > 0 ? calculatedFFMI : calculatedBMI}
                             type={calculatedFFMI > 0 ? "FFMI" : "BMI"}
-                            gender={fizikselVeriler.cinsiyet}
                         />
                     </View>
 

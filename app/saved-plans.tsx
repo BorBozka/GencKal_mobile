@@ -7,17 +7,8 @@ import BrandLogo from "../src/components/BrandLogo";
 import { useAuth } from "../src/context/AuthContext";
 import { useTheme } from "../src/context/ThemeContext";
 import { useAppDialog } from "../src/context/AppDialogContext";
-import { getConfiguredApiBaseUrl, parseApiError } from "../src/services/api";
+import { deleteSavedDietPlan, fetchSavedDietPlan, fetchSavedDietPlans } from "../src/services/savedPlansApi";
 import type { SavedDietPlan, SavedDietPlanSummary } from "../src/types/diet";
-
-const getApiBaseUrlOrThrow = () => {
-    const baseUrl = getConfiguredApiBaseUrl();
-    if (!baseUrl) {
-        throw new Error("API base URL yapılandırılmadı.");
-    }
-
-    return baseUrl;
-};
 
 function formatDate(value: string) {
     return new Intl.DateTimeFormat("tr-TR", {
@@ -46,12 +37,7 @@ export default function SavedPlansScreen() {
         if (!token) return;
         setIsFetching(true);
         try {
-            const response = await fetch(`${getApiBaseUrlOrThrow()}/api/diet-plans`, {
-                headers: authHeaders(),
-            });
-            if (!response.ok) throw new Error(await parseApiError(response));
-            const data = await response.json() as { plans: SavedDietPlanSummary[] };
-            setPlans(data.plans);
+            setPlans(await fetchSavedDietPlans(authHeaders()));
         } catch (error) {
             showDialog({
                 title: "Planlar yüklenemedi",
@@ -61,7 +47,7 @@ export default function SavedPlansScreen() {
         } finally {
             setIsFetching(false);
         }
-    }, [authHeaders, token]);
+    }, [authHeaders, showDialog, token]);
 
     const togglePlanDetail = async (id: string) => {
         if (!token) return;
@@ -77,13 +63,9 @@ export default function SavedPlansScreen() {
         setSelectedPlan(null);
         setIsFetchingDetail(true);
         try {
-            const response = await fetch(`${getApiBaseUrlOrThrow()}/api/diet-plans/${id}`, {
-                headers: authHeaders(),
-            });
-            if (!response.ok) throw new Error(await parseApiError(response));
-            const data = await response.json() as { plan: SavedDietPlan };
+            const plan = await fetchSavedDietPlan(id, authHeaders());
             if (selectedPlanIdRef.current === id) {
-                setSelectedPlan(data.plan);
+                setSelectedPlan(plan);
             }
         } catch (error) {
             if (selectedPlanIdRef.current === id) {
@@ -114,29 +96,25 @@ export default function SavedPlansScreen() {
                     label: "Sil",
                     style: "destructive",
                     onPress: async () => {
-                    setIsDeleting(true);
-                    try {
-                        const response = await fetch(`${getApiBaseUrlOrThrow()}/api/diet-plans/${planId}`, {
-                            method: "DELETE",
-                            headers: authHeaders(),
-                        });
-                        if (!response.ok) throw new Error(await parseApiError(response));
-                        setPlans((current) => current.filter((plan) => plan.id !== planId));
-                        if (selectedPlanIdRef.current === planId) {
-                            selectedPlanIdRef.current = null;
+                        setIsDeleting(true);
+                        try {
+                            await deleteSavedDietPlan(planId, authHeaders());
+                            setPlans((current) => current.filter((plan) => plan.id !== planId));
+                            if (selectedPlanIdRef.current === planId) {
+                                selectedPlanIdRef.current = null;
+                            }
+                            setSelectedPlanId((current) => current === planId ? null : current);
+                            setSelectedPlan((current) => current?.id === planId ? null : current);
+                        } catch (error) {
+                            showDialog({
+                                title: "Plan silinemedi",
+                                message: error instanceof Error ? error.message : "Silme işlemi tamamlanamadı.",
+                                icon: "alert-circle-outline",
+                            });
+                        } finally {
+                            setIsDeleting(false);
                         }
-                        setSelectedPlanId((current) => current === planId ? null : current);
-                        setSelectedPlan((current) => current?.id === planId ? null : current);
-                    } catch (error) {
-                        showDialog({
-                            title: "Plan silinemedi",
-                            message: error instanceof Error ? error.message : "Silme işlemi tamamlanamadı.",
-                            icon: "alert-circle-outline",
-                        });
-                    } finally {
-                        setIsDeleting(false);
-                    }
-                },
+                    },
                 },
             ],
         });

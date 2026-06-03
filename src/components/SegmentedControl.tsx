@@ -1,6 +1,6 @@
 // src/components/SegmentedControl.tsx
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Platform, StyleProp, ViewStyle } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 
@@ -14,7 +14,7 @@ interface SegmentedControlProps<T> {
     options: SegmentedOption<T>[];
     selectedValue: T;
     onValueChange: (value: T) => void;
-    containerStyle?: object;
+    containerStyle?: StyleProp<ViewStyle>;
 }
 
 export default function SegmentedControl<T>({

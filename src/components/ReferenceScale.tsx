@@ -4,12 +4,10 @@ import React, { useMemo } from "react";
 import { View, Text, useWindowDimensions } from "react-native";
 import Svg, { Polygon } from "react-native-svg";
 import { useTheme } from "../context/ThemeContext";
-import type { Cinsiyet } from "../types";
 
 interface ReferenceScaleProps {
     score: number;
     type: "FFMI" | "BMI";
-    gender?: Cinsiyet;
 }
 
 interface Segment {

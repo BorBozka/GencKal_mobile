@@ -183,11 +183,11 @@ export default function InformationScreen() {
                     <TableRow cells={["Aşırı Obez (3. Derece)", "> 40"]} highlight="red-bold" />
                 </View>
 
-                <SubTitle>BMI'nin Sınırları</SubTitle>
+                <SubTitle>BMI’nin Sınırları</SubTitle>
                 <Text style={{ fontSize: 14, color: isDark ? "#cbd5e1" : "#475569", lineHeight: 22, marginBottom: 10 }}>
                     BMI sağlıklı vücut ağırlığını belirlemek için yaygın olsa da, kas ve yağ oranını dikkate almayan sadece bir tahmindir.
                 </Text>
-                <BulletItem bold="Sporcular:" text="Kas yağdan daha ağır olduğu için yüksek kas kütlesine sahip kişiler BMI'ye göre 'Obez' çıkabilir, ancak aslında son derece sağlıklıdırlar." />
+                <BulletItem bold="Sporcular:" text="Kas yağdan daha ağır olduğu için yüksek kas kütlesine sahip kişiler BMI’ye göre ‘Obez’ çıkabilir, ancak aslında son derece sağlıklıdırlar." />
                 <BulletItem bold="Yaşlı Yetişkinler:" text="Aynı BMI değerine sahip gençlere kıyasla daha fazla vücut yağına sahip olma eğilimindedirler." />
 
                 {/* Fazla Kilo / Düşük Kilo Riskleri */}
@@ -218,7 +218,7 @@ export default function InformationScreen() {
                 {/* FFMI Bölümü */}
                 <SectionTitle>FFMI (Yağsız Vücut Kitle İndeksi) Nedir?</SectionTitle>
                 <Text style={{ fontSize: 14, color: isDark ? "#cbd5e1" : "#475569", lineHeight: 22, marginBottom: 12 }}>
-                    FFMI, boyunuza oranla ne kadar kas kütlesine sahip olduğunuzu hesaplamanızı sağlayan bir indekstir. Bu indeks, vücut geliştiriciler ve sporcular tarafından gelişimlerini takip etmek için yaygın olarak kullanılır ve BMI'ye göre çok daha güvenilirdir.
+                    FFMI, boyunuza oranla ne kadar kas kütlesine sahip olduğunuzu hesaplamanızı sağlayan bir indekstir. Bu indeks, vücut geliştiriciler ve sporcular tarafından gelişimlerini takip etmek için yaygın olarak kullanılır ve BMI’ye göre çok daha güvenilirdir.
                 </Text>
 
                 <SubTitle>FFMI Formülü</SubTitle>

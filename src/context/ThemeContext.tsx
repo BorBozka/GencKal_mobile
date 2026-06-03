@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react';
 import { Appearance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColorScheme as useNativeWindColorScheme } from 'nativewind';
@@ -138,7 +138,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }, []);
 
     // Sync NativeWind whenever themeMode or system scheme changes
-    const applyToNativeWind = (mode: ThemeMode) => {
+    const applyToNativeWind = useCallback((mode: ThemeMode) => {
         if (mode === 'sistem') {
             // Let NativeWind follow the system natively
             setColorScheme('system');
@@ -147,12 +147,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         } else {
             setColorScheme('light');
         }
-    };
+    }, [setColorScheme]);
 
     useEffect(() => {
         if (!isMounted) return;
         applyToNativeWind(themeMode);
-    }, [themeMode, systemScheme, isMounted]);
+    }, [themeMode, systemScheme, isMounted, applyToNativeWind]);
 
     const setThemeMode = async (mode: ThemeMode) => {
         setThemeModeState(mode);

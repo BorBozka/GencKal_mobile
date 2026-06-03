@@ -1,13 +1,13 @@
 // src/components/BrandLogo.tsx
 import React from "react";
-import { View, Text } from "react-native";
+import { View, Text, StyleProp, ViewStyle } from "react-native";
 
 import { useTheme } from "../context/ThemeContext";
 
 interface BrandLogoProps {
     /** "center" (default) veya "left" hizalama */
     align?: "center" | "left";
-    style?: object;
+    style?: StyleProp<ViewStyle>;
     /** Logoyu büyük boyutta göstermek için */
     large?: boolean;
 }

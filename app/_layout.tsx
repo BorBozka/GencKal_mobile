@@ -3,9 +3,6 @@ import "../global.css";
 import React from "react";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync().catch(() => {});
 import { SafeAreaProvider, initialWindowMetrics } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { ThemeProvider as NavigationThemeProvider, DarkTheme, DefaultTheme } from "@react-navigation/native";
@@ -14,6 +11,9 @@ import { FormProvider } from "../src/context/FormContext";
 import { ThemeProvider, useTheme } from "../src/context/ThemeContext";
 import { AuthProvider } from "../src/context/AuthContext";
 import { AppDialogProvider } from "../src/context/AppDialogContext";
+
+// Prevent the splash screen from auto-hiding before asset loading is complete.
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 const CustomDarkTheme = {
     ...DarkTheme,

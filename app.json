@@ -22,7 +22,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "usesCleartextTraffic": true,
+      "usesCleartextTraffic": false,
       "edgeToEdgeEnabled": false,
       "predictiveBackGestureEnabled": false,
       "userInterfaceStyle": "automatic"
@@ -44,7 +44,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-secure-store"
     ]
   }
 }

@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { getConfiguredApiBaseUrl, parseApiError } from "../services/api";
+import { getConfiguredApiBaseUrlOrThrow, parseApiError } from "../services/api";
 import type { AuthUser } from "../types";
 
 interface AuthResponse {
@@ -18,16 +19,86 @@ interface AuthContextValue {
     authHeaders: () => Record<string, string>;
 }
 
-const storageKey = "genckal_auth_token";
+const storageKey = "@genckalculator_auth_token";
+const legacyStorageKey = "genckal_auth_token";
 const AuthContext = createContext<AuthContextValue | null>(null);
+let secureStoreAvailable: boolean | null = null;
 
-const getApiBaseUrlOrThrow = () => {
-    const baseUrl = getConfiguredApiBaseUrl();
-    if (!baseUrl) {
-        throw new Error("API base URL yapılandırılmadı.");
+const isAuthUser = (value: unknown): value is AuthUser => {
+    if (!value || typeof value !== "object") return false;
+    const user = value as Record<string, unknown>;
+    return typeof user.id === "string"
+        && typeof user.name === "string"
+        && typeof user.email === "string";
+};
+
+const isAuthResponse = (value: unknown): value is AuthResponse => {
+    if (!value || typeof value !== "object") return false;
+    const auth = value as Record<string, unknown>;
+    return isAuthUser(auth.user) && typeof auth.token === "string" && auth.token.length > 0;
+};
+
+const parseAuthResponse = async (response: Response) => {
+    const data: unknown = await response.json();
+    if (!isAuthResponse(data)) {
+        throw new Error("API'den geçersiz kimlik doğrulama yanıtı alındı.");
     }
 
-    return baseUrl;
+    return data;
+};
+
+const canUseSecureTokenStorage = async () => {
+    if (secureStoreAvailable !== null) {
+        return secureStoreAvailable;
+    }
+
+    secureStoreAvailable = await SecureStore.isAvailableAsync().catch(() => false);
+    return secureStoreAvailable;
+};
+
+const saveAuthToken = async (authToken: string) => {
+    if (await canUseSecureTokenStorage()) {
+        await SecureStore.setItemAsync(storageKey, authToken);
+    }
+
+    await AsyncStorage.removeItem(legacyStorageKey);
+};
+
+const readAuthToken = async () => {
+    if (!await canUseSecureTokenStorage()) {
+        await AsyncStorage.removeItem(legacyStorageKey);
+        return null;
+    }
+
+    const secureToken = await SecureStore.getItemAsync(storageKey);
+    if (secureToken) {
+        return secureToken;
+    }
+
+    const legacySecureToken = await SecureStore.getItemAsync(legacyStorageKey);
+    if (legacySecureToken) {
+        await SecureStore.setItemAsync(storageKey, legacySecureToken);
+        await SecureStore.deleteItemAsync(legacyStorageKey);
+        return legacySecureToken;
+    }
+
+    const legacyToken = await AsyncStorage.getItem(legacyStorageKey);
+    if (!legacyToken) {
+        return null;
+    }
+
+    await SecureStore.setItemAsync(storageKey, legacyToken);
+    await AsyncStorage.removeItem(legacyStorageKey);
+    return legacyToken;
+};
+
+const deleteAuthToken = async () => {
+    if (await canUseSecureTokenStorage()) {
+        await SecureStore.deleteItemAsync(storageKey);
+        await SecureStore.deleteItemAsync(legacyStorageKey);
+    }
+
+    await AsyncStorage.removeItem(legacyStorageKey);
 };
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -36,13 +107,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
 
     const applyAuth = useCallback(async (auth: AuthResponse) => {
-        await AsyncStorage.setItem(storageKey, auth.token);
+        await saveAuthToken(auth.token);
         setToken(auth.token);
         setUser(auth.user);
     }, []);
 
     const signout = useCallback(async () => {
-        await AsyncStorage.removeItem(storageKey);
+        await deleteAuthToken();
         setToken(null);
         setUser(null);
     }, []);
@@ -55,7 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         let isActive = true;
 
         const hydrateAuth = async () => {
-            const savedToken = await AsyncStorage.getItem(storageKey);
+            const savedToken = await readAuthToken();
             if (!savedToken) {
                 if (isActive) setIsLoading(false);
                 return;
@@ -63,16 +134,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             if (isActive) setToken(savedToken);
             try {
-                const response = await fetch(`${getApiBaseUrlOrThrow()}/api/auth/me`, {
+                const response = await fetch(`${getConfiguredApiBaseUrlOrThrow()}/api/auth/me`, {
                     headers: { Authorization: `Bearer ${savedToken}` },
                 });
+                if (response.status === 401 || response.status === 403) {
+                    await deleteAuthToken();
+                    if (isActive) {
+                        setToken(null);
+                        setUser(null);
+                    }
+                    return;
+                }
                 if (!response.ok) throw new Error(await parseApiError(response));
-                const data = await response.json() as { user: AuthUser };
-                if (isActive) setUser(data.user);
+
+                const data: unknown = await response.json();
+                const responseUser = data && typeof data === "object"
+                    ? (data as Record<string, unknown>).user
+                    : null;
+                if (!isAuthUser(responseUser)) {
+                    throw new Error("API'den geçersiz kullanıcı yanıtı alındı.");
+                }
+
+                if (isActive) setUser(responseUser);
             } catch {
-                await AsyncStorage.removeItem(storageKey);
                 if (isActive) {
-                    setToken(null);
                     setUser(null);
                 }
             } finally {
@@ -88,23 +173,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     const signin = useCallback(async (email: string, password: string) => {
-        const response = await fetch(`${getApiBaseUrlOrThrow()}/api/auth/signin`, {
+        const response = await fetch(`${getConfiguredApiBaseUrlOrThrow()}/api/auth/signin`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
         });
         if (!response.ok) throw new Error(await parseApiError(response));
-        await applyAuth(await response.json() as AuthResponse);
+        await applyAuth(await parseAuthResponse(response));
     }, [applyAuth]);
 
     const signup = useCallback(async (name: string, email: string, password: string) => {
-        const response = await fetch(`${getApiBaseUrlOrThrow()}/api/auth/signup`, {
+        const response = await fetch(`${getConfiguredApiBaseUrlOrThrow()}/api/auth/signup`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name: name.trim(), email: email.trim().toLowerCase(), password }),
         });
         if (!response.ok) throw new Error(await parseApiError(response));
-        await applyAuth(await response.json() as AuthResponse);
+        await applyAuth(await parseAuthResponse(response));
     }, [applyAuth]);
 
     const value = useMemo<AuthContextValue>(() => ({
