@@ -852,7 +852,7 @@ export default function DietTab() {
                                             <View style={[styles.signalBar, { height: 12, backgroundColor: "#ffffff" }]} />
                                             <View style={[styles.signalBar, { height: 8, backgroundColor: "#ffffff" }]} />
                                         </View>
-                                        <Text style={styles.formSubmitButtonText}>AI Planımı Oluştur</Text>
+                                        <Text style={styles.formSubmitButtonText}>Diyet Planımı Oluştur</Text>
                                     </View>
                                 </TouchableOpacity>
                             </View>
