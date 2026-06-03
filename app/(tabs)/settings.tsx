@@ -14,7 +14,7 @@ import { useAppDialog } from "../../src/context/AppDialogContext";
 export default function SettingsTab() {
     const router = useRouter();
     const { themeMode, setThemeMode, isDark, accentColor, setAccentColor, colors } = useTheme();
-    const { user, isLoading, signout } = useAuth();
+    const { user, signout } = useAuth();
     const { showDialog } = useAppDialog();
     
     const themeOptions: SegmentedOption<ThemeContextType["themeMode"]>[] = [
@@ -127,7 +127,6 @@ export default function SettingsTab() {
                                     <TouchableOpacity
                                         onPress={() => router.push("/auth")}
                                         activeOpacity={0.6}
-                                        disabled={isLoading}
                                         style={{
                                             flexDirection: "row",
                                             alignItems: "center",

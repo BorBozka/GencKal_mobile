@@ -19,7 +19,7 @@ interface AuthContextValue {
     authHeaders: () => Record<string, string>;
 }
 
-const storageKey = "@genckalculator_auth_token";
+const storageKey = "genckalculator_auth_token";
 const legacyStorageKey = "genckal_auth_token";
 const AuthContext = createContext<AuthContextValue | null>(null);
 let secureStoreAvailable: boolean | null = null;
@@ -126,14 +126,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         let isActive = true;
 
         const hydrateAuth = async () => {
-            const savedToken = await readAuthToken();
-            if (!savedToken) {
-                if (isActive) setIsLoading(false);
-                return;
-            }
-
-            if (isActive) setToken(savedToken);
             try {
+                const savedToken = await readAuthToken();
+                if (!savedToken) {
+                    return;
+                }
+
+                if (isActive) setToken(savedToken);
                 const response = await fetch(`${getConfiguredApiBaseUrlOrThrow()}/api/auth/me`, {
                     headers: { Authorization: `Bearer ${savedToken}` },
                 });
@@ -158,6 +157,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 if (isActive) setUser(responseUser);
             } catch {
                 if (isActive) {
+                    setToken(null);
                     setUser(null);
                 }
             } finally {
