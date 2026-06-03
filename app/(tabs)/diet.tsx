@@ -229,7 +229,7 @@ export default function DietTab() {
     }, [navigation, step, generatedPlan, setStep]);
 
     // Android fiziksel geri tuşu ve iOS kenardan kaydırarak geri gitme (swipe-back) jestlerini yakalayarak
-    // kullanıcıyı hesaplayıcıya veya önceki modala atmak yerine akıllıca bir önceki sihirbaz adımına döndürelim!
+    // kullanıcıyı hesaplayıcıya veya önceki modala atmak yerine bir önceki sihirbaz adımına döndürme
     useEffect(() => {
         const unsubscribe = navigation.addListener("beforeRemove", (e) => {
             if (step === "select-plan") {
@@ -284,8 +284,6 @@ export default function DietTab() {
         }, [step, isInputFocused, setStep])
     );
 
-    // Taşındı (üst satırlarda tanımlandı)
-
     // --- PRESET DİYET PLANLARI ---
     const plans = useMemo<PlanOption[]>(() => [
         {
@@ -313,9 +311,6 @@ export default function DietTab() {
             macros: { protein: 35, carb: 35, fat: 30 }
         },
     ], [calculatedTDEE, isDark]);
-
-    // generateLocalFallbackPlan ve generateLocalSwapFood artık
-    // src/services/localDietGenerator.ts'den import ediliyor (3.9)
 
     const addAllergy = () => {
         const trimmed = allergyInput.trim();
@@ -476,7 +471,7 @@ export default function DietTab() {
         }
     };
 
-    const handleSavePlan = async () => {
+    const handleSavePlan = React.useCallback(async () => {
         if (!generatedPlan) return;
 
         if (!user || !token) {
@@ -524,7 +519,7 @@ export default function DietTab() {
         } finally {
             setIsSavingPlan(false);
         }
-    };
+    }, [activePlan, allergyList, authHeaders, calculatedTDEE, dietType, generatedPlan, mealsPerDay, plans, router, showDialog, token, user]);
 
     useEffect(() => {
         if (pendingSave !== "diet-plan-save") {
@@ -539,7 +534,7 @@ export default function DietTab() {
         pendingSaveHandledRef.current = true;
         setStep("result");
         void handleSavePlan();
-    }, [pendingSave, user, token, generatedPlan, setStep]);
+    }, [pendingSave, user, token, generatedPlan, setStep, handleSavePlan]);
 
     // --- AKILLI PROGRESS VE MESAJ DÖNGÜSÜ ---
     useEffect(() => {
@@ -601,7 +596,6 @@ export default function DietTab() {
                     <Tabs.Screen options={{ headerShown: false }} />
 
                     <View style={styles.fullScreenLoader}>
-                        {/* Logomuz sayfanın daha aşağısına, merkezine alındı ve büyütüldü */}
                         <BrandLogo large style={{ marginBottom: 36 }} />
 
                         <Text style={styles.loadingTitle} className="dark:text-slate-100">Diyet Planı Hazırlanıyor</Text>
