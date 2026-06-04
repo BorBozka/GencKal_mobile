@@ -26,9 +26,13 @@ export default function SettingsTab() {
     const handleSavedPlansPress = () => {
         if (!user) {
             showDialog({
-                title: "Giriş yapmanız gerekmektedir",
-                message: "Kayıtlı diyet planlarınızı görmek için önce giriş yapın.",
-                icon: "person-circle-outline",
+                title: "Kayıtlı planlar için giriş gerekli",
+                message: "Diyet planlarınızı görüntülemek için hesabınıza giriş yapmanız gerekir. Giriş ekranına gitmek ister misiniz?",
+                icon: null,
+                actions: [
+                    { label: "Hayır", style: "cancel" },
+                    { label: "Evet", onPress: () => router.push("/auth") },
+                ],
             });
             return;
         }

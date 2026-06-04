@@ -14,7 +14,7 @@ interface DialogAction {
 interface DialogOptions {
     title: string;
     message?: string;
-    icon?: keyof typeof Ionicons.glyphMap;
+    icon?: keyof typeof Ionicons.glyphMap | null;
     actions?: DialogAction[];
 }
 
@@ -78,21 +78,23 @@ export function AppDialogProvider({ children }: { children: React.ReactNode }) {
                         elevation: 12,
                         }}
                     >
-                        <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 14 }}>
-                            <View style={{
-                                width: 42,
-                                height: 42,
-                                borderRadius: 14,
-                                alignItems: "center",
-                                justifyContent: "center",
-                                backgroundColor: isDark ? colors.lightAccentDark : colors.lightAccent,
-                            }}>
-                                <Ionicons
-                                    name={dialog?.icon || "information-circle-outline"}
-                                    size={22}
-                                    color={isDark ? colors.primaryDark : colors.primary}
-                                />
-                            </View>
+                        <View style={{ flexDirection: "row", alignItems: "flex-start", gap: dialog?.icon === null ? 0 : 14 }}>
+                            {dialog?.icon !== null && (
+                                <View style={{
+                                    width: 42,
+                                    height: 42,
+                                    borderRadius: 14,
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    backgroundColor: isDark ? colors.lightAccentDark : colors.lightAccent,
+                                }}>
+                                    <Ionicons
+                                        name={dialog?.icon || "information-circle-outline"}
+                                        size={22}
+                                        color={isDark ? colors.primaryDark : colors.primary}
+                                    />
+                                </View>
+                            )}
                             <View style={{ flex: 1 }}>
                                 <Text style={{
                                     fontSize: 18,

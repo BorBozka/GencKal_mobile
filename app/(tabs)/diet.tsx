@@ -176,6 +176,7 @@ export default function DietTab() {
     const [isLocalSimulated, setIsLocalSimulated] = useState(false);
     const [isSavingPlan, setIsSavingPlan] = useState(false);
     const [isPlanSaveSuccess, setIsPlanSaveSuccess] = useState(false);
+    const [canViewSavedPlans, setCanViewSavedPlans] = useState(false);
 
     // --- SWAP YÜKLENİYOR STATELERİ ---
     const [swappingFoodIds, setSwappingFoodIds] = useState<Record<string, boolean>>({});
@@ -489,6 +490,7 @@ export default function DietTab() {
 
         setIsSavingPlan(true);
         setIsPlanSaveSuccess(false);
+        setCanViewSavedPlans(false);
         try {
             const targetCalories = getDisplayTargetCalories(calculatedTDEE, activePlan);
             const selectedPlanName = plans.find((plan) => plan.id === activePlan)?.name || "Diyet Planı";
@@ -508,6 +510,7 @@ export default function DietTab() {
             }
             saveFeedbackTimeoutRef.current = setTimeout(() => {
                 setIsPlanSaveSuccess(false);
+                setCanViewSavedPlans(true);
                 saveFeedbackTimeoutRef.current = null;
             }, 1800);
         } catch (error) {
@@ -520,6 +523,15 @@ export default function DietTab() {
             setIsSavingPlan(false);
         }
     }, [activePlan, allergyList, authHeaders, calculatedTDEE, dietType, generatedPlan, mealsPerDay, plans, router, showDialog, token, user]);
+
+    useEffect(() => {
+        setIsPlanSaveSuccess(false);
+        setCanViewSavedPlans(false);
+        if (saveFeedbackTimeoutRef.current) {
+            clearTimeout(saveFeedbackTimeoutRef.current);
+            saveFeedbackTimeoutRef.current = null;
+        }
+    }, [generatedPlan]);
 
     useEffect(() => {
         if (pendingSave !== "diet-plan-save") {
@@ -1019,19 +1031,19 @@ export default function DietTab() {
                             })}
 
                             <TouchableOpacity
-                                onPress={handleSavePlan}
-                                disabled={isSavingPlan}
+                                onPress={canViewSavedPlans ? () => router.push("/saved-plans") : handleSavePlan}
+                                disabled={isSavingPlan || isPlanSaveSuccess}
                                 activeOpacity={0.85}
                                 style={[
                                     styles.resultSaveButton,
-                                    isPlanSaveSuccess && styles.resultSaveButtonSuccess,
+                                    (isPlanSaveSuccess || canViewSavedPlans) && styles.resultSaveButtonSuccess,
                                     isSavingPlan && styles.resultSaveButtonDisabled
                                 ]}
                             >
                                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                                    <Ionicons name={isPlanSaveSuccess ? "bookmark" : "bookmark-outline"} size={18} color="#ffffff" />
+                                    <Ionicons name={(isPlanSaveSuccess || canViewSavedPlans) ? "bookmark" : "bookmark-outline"} size={18} color="#ffffff" />
                                     <Text style={styles.resultSaveButtonText}>
-                                        {isSavingPlan ? "Kaydediliyor..." : isPlanSaveSuccess ? "Kaydedildi" : "Bu Diyet Planını Kaydet"}
+                                        {isSavingPlan ? "Kaydediliyor..." : isPlanSaveSuccess ? "Kaydedildi" : canViewSavedPlans ? "Diyet Planlarımı Görüntüle" : "Bu Diyet Planını Kaydet"}
                                     </Text>
                                 </View>
                             </TouchableOpacity>
