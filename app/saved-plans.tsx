@@ -200,7 +200,7 @@ export default function SavedPlansScreen() {
                                 Kayıtlı diyet planlarınızı görmek için hesabınıza giriş yapın.
                             </Text>
                             <TouchableOpacity
-                                onPress={() => router.push("/auth")}
+                                onPress={() => router.push("/auth?returnTo=saved-plans")}
                                 style={{ marginTop: 20, paddingVertical: 14, paddingHorizontal: 22, borderRadius: 16, backgroundColor: isDark ? colors.brandDark : colors.primary }}
                             >
                                 <Text style={{ color: "#ffffff", fontWeight: "800" }}>Giriş Yap</Text>

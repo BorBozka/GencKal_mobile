@@ -23,6 +23,18 @@ export default function AuthScreen() {
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const getReturnPath = () => {
+        if (returnTo === "diet-result") {
+            return `/diet${pendingSave === "diet-plan-save" ? "?pendingSave=diet-plan-save" : ""}`;
+        }
+
+        if (returnTo === "saved-plans") {
+            return "/saved-plans";
+        }
+
+        return "/settings";
+    };
+
     const handleSubmit = async () => {
         setIsSubmitting(true);
         try {
@@ -31,10 +43,7 @@ export default function AuthScreen() {
             } else {
                 await signin(email, password);
             }
-            router.replace(returnTo === "diet-result"
-                ? `/diet${pendingSave === "diet-plan-save" ? "?pendingSave=diet-plan-save" : ""}`
-                : "/settings"
-            );
+            router.replace(getReturnPath());
         } catch (error) {
             showDialog({
                 title: mode === "signup" ? "Kayıt başarısız" : "Giriş başarısız",

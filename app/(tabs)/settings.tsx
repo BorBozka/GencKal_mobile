@@ -31,7 +31,7 @@ export default function SettingsTab() {
                 icon: null,
                 actions: [
                     { label: "Hayır", style: "cancel" },
-                    { label: "Evet", onPress: () => router.push("/auth") },
+                    { label: "Evet", onPress: () => router.push("/auth?returnTo=saved-plans") },
                 ],
             });
             return;
