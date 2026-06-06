@@ -156,10 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
                 if (isActive) setUser(responseUser);
             } catch {
-                if (isActive) {
-                    setToken(null);
-                    setUser(null);
-                }
+                if (isActive) setUser(null);
             } finally {
                 if (isActive) setIsLoading(false);
             }

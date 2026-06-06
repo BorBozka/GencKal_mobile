@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -22,7 +22,7 @@ function formatDate(value: string) {
 
 export default function SavedPlansScreen() {
     const router = useRouter();
-    const { user, token, authHeaders } = useAuth();
+    const { user, token, isLoading, authHeaders } = useAuth();
     const { isDark, colors } = useTheme();
     const { showDialog } = useAppDialog();
     const [plans, setPlans] = useState<SavedDietPlanSummary[]>([]);
@@ -182,6 +182,21 @@ export default function SavedPlansScreen() {
             </View>
         );
     };
+
+    if (isLoading) {
+        return (
+            <View style={{ flex: 1, backgroundColor: isDark ? "#020617" : "#ffffff" }}>
+                <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
+                    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 20 }}>
+                        <ActivityIndicator size="small" color={isDark ? colors.primaryDark : colors.primary} />
+                        <Text style={{ marginTop: 12, color: isDark ? "#94a3b8" : "#64748b", fontWeight: "700" }}>
+                            Planlar hazırlanıyor...
+                        </Text>
+                    </View>
+                </SafeAreaView>
+            </View>
+        );
+    }
 
     if (!user) {
         return (

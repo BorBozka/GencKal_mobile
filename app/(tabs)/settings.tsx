@@ -1,7 +1,7 @@
 // app/(tabs)/settings.tsx
 // Premium iOS-Style Ayarlar Sekmesi (Aydınlık tema kilidi uygulanmış)
 import React from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { ActivityIndicator, View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -14,7 +14,7 @@ import { useAppDialog } from "../../src/context/AppDialogContext";
 export default function SettingsTab() {
     const router = useRouter();
     const { themeMode, setThemeMode, isDark, accentColor, setAccentColor, colors } = useTheme();
-    const { user, signout } = useAuth();
+    const { user, isLoading, signout } = useAuth();
     const { showDialog } = useAppDialog();
     
     const themeOptions: SegmentedOption<ThemeContextType["themeMode"]>[] = [
@@ -102,7 +102,28 @@ export default function SettingsTab() {
                             HESAP
                         </Text>
                         <View style={{ backgroundColor: isDark ? "#0f172a" : "#f8fafc", borderRadius: 20, overflow: "hidden", borderWidth: 1, borderColor: isDark ? "#1e293b" : "#f1f5f9" }}>
-                            {user ? (
+                            {isLoading ? (
+                                <>
+                                    <View
+                                        style={{
+                                            flexDirection: "row",
+                                            alignItems: "center",
+                                            paddingHorizontal: 20,
+                                            paddingVertical: 14
+                                        }}
+                                    >
+                                        <View style={{ width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: isDark ? colors.lightAccentDark : colors.lightAccent, marginRight: 14 }}>
+                                            <ActivityIndicator size="small" color={isDark ? colors.primaryDark : colors.primary} />
+                                        </View>
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={{ fontSize: 15, fontWeight: "700", color: isDark ? "#f1f5f9" : "#1e293b" }}>
+                                                Hesap bilgileri yükleniyor
+                                            </Text>
+                                        </View>
+                                    </View>
+                                    <View style={{ height: 1, backgroundColor: isDark ? "#1e293b" : "#f1f5f9", marginLeft: 70 }} />
+                                </>
+                            ) : user ? (
                                 <>
                                     <View
                                         style={{
