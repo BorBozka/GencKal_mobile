@@ -21,6 +21,7 @@ interface AuthContextValue {
 
 const storageKey = "genckalculator_auth_token";
 const legacyStorageKey = "genckal_auth_token";
+const authHydrationTimeoutMs = 3000;
 const AuthContext = createContext<AuthContextValue | null>(null);
 let secureStoreAvailable: boolean | null = null;
 
@@ -101,6 +102,17 @@ const deleteAuthToken = async () => {
     await AsyncStorage.removeItem(legacyStorageKey);
 };
 
+const fetchWithTimeout = async (url: string, init: RequestInit) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), authHydrationTimeoutMs);
+
+    try {
+        return await fetch(url, { ...init, signal: controller.signal });
+    } finally {
+        clearTimeout(timeoutId);
+    }
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<AuthUser | null>(null);
     const [token, setToken] = useState<string | null>(null);
@@ -132,8 +144,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     return;
                 }
 
-                if (isActive) setToken(savedToken);
-                const response = await fetch(`${getConfiguredApiBaseUrlOrThrow()}/api/auth/me`, {
+                const response = await fetchWithTimeout(`${getConfiguredApiBaseUrlOrThrow()}/api/auth/me`, {
                     headers: { Authorization: `Bearer ${savedToken}` },
                 });
                 if (response.status === 401 || response.status === 403) {
@@ -154,9 +165,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     throw new Error("API'den geçersiz kullanıcı yanıtı alındı.");
                 }
 
-                if (isActive) setUser(responseUser);
+                if (isActive) {
+                    setToken(savedToken);
+                    setUser(responseUser);
+                }
             } catch {
-                if (isActive) setUser(null);
+                if (isActive) {
+                    setToken(null);
+                    setUser(null);
+                }
             } finally {
                 if (isActive) setIsLoading(false);
             }
