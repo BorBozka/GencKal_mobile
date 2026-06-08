@@ -1,6 +1,4 @@
 // src/services/localDietGenerator.ts
-// 3.9: generateLocalFallbackPlan ve generateLocalSwapFood component dışına taşındı.
-// Saf fonksiyonlar — React state'e bağlı değil, her render'da yeniden oluşturulmuyor.
 import type { GeneratedPlan, FoodItem, FoodItemMacros } from "../types/diet";
 
 let _idCounter = 0;
