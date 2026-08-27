@@ -129,4 +129,3 @@ Ayarlar sekmesinden Aydınlık/Karanlık/Sistem görünüm modu ile Indigo, Orma
 ## Notlar
 
 - Bu proje kişisel/portföy amaçlı geliştirilmiştir.
-- `instructions.md` dosyası, projede kod değişikliklerinin nasıl yapılması gerektiğine dair geliştirici notlarını içerir.
